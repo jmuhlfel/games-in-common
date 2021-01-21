@@ -1,4 +1,12 @@
 {
     "name": "gamesincommon",
-    "description": "Help figure out what games to play together based on Steam playtime, ratings etc."
+    "description": "Help figure out what games to play together based on Steam playtime, ratings etc.",
+    "options": [
+        {
+            "name": "payload",
+            "description": "please let this work",
+            "type": 3,
+            "required": true
+        }
+    ]
 }
