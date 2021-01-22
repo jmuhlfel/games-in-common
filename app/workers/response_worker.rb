@@ -7,15 +7,22 @@ class ResponseWorker
   queue_as :default
 
   def perform(user_ids:, interaction_token:)
+    @user_ids = user_ids
+    @interaction_token = interaction_token
+
+    update_original_message! { content: 'meow' }
+
+    
+  end
+
+  def update_original_message!(data)
     puts '-------------------------------------------------------------------------'
-    url = original_message_url(interaction_token)
-    puts url
-    puts initial_response
-    res = HTTParty.patch(url, headers: DISCORD_API_HEADERS, body: initial_response.to_json)
+    puts original_message_url
+    puts data
+    res = HTTParty.patch(original_message_url, headers: DISCORD_API_HEADERS, body: data.to_json)
     puts '-------------------------------------------------------------------------'
     puts res.headers
     puts res.body
-  end
 
   def initial_response
     {
@@ -23,7 +30,7 @@ class ResponseWorker
     }
   end
 
-  def original_message_url(token)
-    BASE_INTERACTION_URL + token + ORIGINAL_MESSAGE_SUFFIX
+  def original_message_url
+    @original_message_url ||= BASE_INTERACTION_URL + @interaction_token + ORIGINAL_MESSAGE_SUFFIX
   end
 end

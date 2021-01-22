@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # make sure Discord has the latest configuration for our slash command
 
-SlashCommand.register!
+Discord::SlashCommand.register!

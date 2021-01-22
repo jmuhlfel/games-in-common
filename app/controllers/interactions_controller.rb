@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class InteractionsController < ActionController::API
   before_action :verify_request
 
@@ -10,7 +12,7 @@ class InteractionsController < ActionController::API
     if json['type'] == 1
       render json: PING_JSON
     else
-      interaction = Interaction.new(params)
+      interaction = Discord::Interaction.new(params)
 
       if interaction.valid?
         ResponseJob.perform_later(
