@@ -1,15 +1,13 @@
 class SlashCommand
-
-  BASE_URL = "https://discord.com/api/v8/applications/#{ENV["DISCORD_APP_ID"]}".freeze
-  URL_SUFFIX = "/commands".freeze
+  BASE_URL = "https://discord.com/api/v8/applications/#{ENV['DISCORD_APP_ID']}".freeze
+  URL_SUFFIX = '/commands'.freeze
   GLOBAL_COMMAND_URL = (BASE_URL + URL_SUFFIX).freeze
   HEADERS = {
-    "Authorization" => "Bot #{ENV["DISCORD_BOT_TOKEN"]}",
-    "Content-Type" => "application/json"
+    'Authorization' => "Bot #{ENV['DISCORD_BOT_TOKEN']}",
+    'Content-Type' => 'application/json'
   }.freeze
 
   class << self
-
     def register!
       HTTParty.post(GLOBAL_COMMAND_URL, headers: HEADERS, body: command_json)
     end
@@ -25,9 +23,7 @@ class SlashCommand
     end
 
     def command_json
-      JSON.parse(File.read("app/json/slash_command.json")).to_json
+      JSON.parse(File.read('app/json/slash_command.json')).to_json
     end
-
   end
-
 end
