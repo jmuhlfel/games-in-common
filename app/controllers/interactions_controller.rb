@@ -10,26 +10,14 @@ class InteractionsController < ActionController::API
     if json['type'] == 1
       render json: PING_JSON
     else
-      # json = JSON.parse(request.body.read)
-      user_ids = Array(params.dig(:data, :options)).select do |ha|
-                   ha['name'].starts_with? 'user'
-                 end.map { |ha| ha['value'] }
-      mentions = user_ids.map { |id| mention(id) }.to_sentence
+      interaction = Interaction.new(params)
 
-      render json: {
-        type: 3,
-        data: {
-          tts: false,
-          content: "Congrats on sending your command, #{mentions}!",
-          embeds: [],
-          allowed_mentions: []
-        }
-      }.to_json
+      if interaction.valid?
+        render json: interaction.response.to_json
+      else
+        head :bad_request
+      end
     end
-  end
-
-  def mention(user_id)
-    "<@#{user_id}>"
   end
 
   private
