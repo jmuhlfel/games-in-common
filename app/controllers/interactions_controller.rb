@@ -13,6 +13,10 @@ class InteractionsController < ActionController::API
       interaction = Interaction.new(params)
 
       if interaction.valid?
+        ResponseJob.perform_later(
+          user_ids: interaction.user_ids,
+          interaction_token: interaction.token
+        )
         render json: interaction.response.to_json
       else
         head :bad_request

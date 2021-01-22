@@ -1,25 +1,20 @@
 class SlashCommand
-  BASE_URL = "https://discord.com/api/v8/applications/#{ENV['DISCORD_APP_ID']}".freeze
-  URL_SUFFIX = '/commands'.freeze
-  GLOBAL_COMMAND_URL = (BASE_URL + URL_SUFFIX).freeze
-  HEADERS = {
-    'Authorization' => "Bot #{ENV['DISCORD_BOT_TOKEN']}",
-    'Content-Type' => 'application/json'
-  }.freeze
+  COMMAND_URL_SUFFIX = '/commands'.freeze
+  GLOBAL_COMMAND_URL = (DISCORD_APP_URL + COMMAND_URL_SUFFIX).freeze
 
   class << self
     def register!
-      HTTParty.post(GLOBAL_COMMAND_URL, headers: HEADERS, body: command_json)
+      HTTParty.post(GLOBAL_COMMAND_URL, headers: DISCORD_API_HEADERS, body: command_json)
     end
 
     def register_for_guild!(guild_id)
-      guild_command_url = BASE_URL + "/guilds/#{guild_id}" + URL_SUFFIX
+      guild_command_url = DISCORD_APP_URL + "/guilds/#{guild_id}" + COMMAND_URL_SUFFIX
 
-      HTTParty.post(guild_command_url, headers: HEADERS, body: command_json)
+      HTTParty.post(guild_command_url, headers: DISCORD_API_HEADERS, body: command_json)
     end
 
     def fetch
-      HTTParty.get(GLOBAL_COMMAND_URL, headers: HEADERS)
+      HTTParty.get(GLOBAL_COMMAND_URL, headers: DISCORD_API_HEADERS)
     end
 
     def command_json

@@ -3,7 +3,7 @@ class Interaction
 
   attr_reader :params
 
-  validates :params, presence: true
+  validates :params, :token, presence: true
   validates :user_ids, length: { minimum: 2 }
 
   def initialize(params)
@@ -14,6 +14,10 @@ class Interaction
     @user_ids ||= Array(@params.dig(:data, :options)).select do |ha|
       ha['name'].starts_with? 'user'
     end.map { |ha| ha['value'] }
+  end
+
+  def token
+    @token ||= @params[:token]
   end
 
   def mention_phrase
@@ -31,7 +35,9 @@ class Interaction
         tts: false,
         content: "Checking on authorization for #{mention_phrase}...",
         embeds: [],
-        allowed_mentions: []
+        allowed_mentions: {
+          parse: []
+        }
       }
     }
   end
