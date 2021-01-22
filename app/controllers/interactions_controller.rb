@@ -10,12 +10,25 @@ class InteractionsController < ActionController::API
     # discord needs to be able to ping the interaction endpoint
     if json["type"] == 1
       render json: PING_JSON
-      return
-    end
+    else
+      # json = JSON.parse(request.body.read)
+      user_ids = Array(params.dig(:data, :options)).select {|ha| ha["name"].starts_with? "user"}.map {|ha| ha["value"]}
+      mentions = user_ids.map { |id| mention(id) }.to_sentence
 
-    pp json
-    puts '------------------------------------------------'
-    pp params
+      render json: {
+        type: 3,
+        data: {
+          tts: false,
+          content: "Congrats on sending your command, #{mentions}!",
+          embeds: [],
+          allowed_mentions: []
+        }
+      }.to_json
+    end
+  end
+
+  def mention(user_id)
+    "<@#{user_id}>"
   end
 
   private

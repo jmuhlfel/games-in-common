@@ -3,10 +3,52 @@
     "description": "Help figure out what games to play together based on Steam playtime, ratings etc.",
     "options": [
         {
-            "name": "payload",
-            "description": "please let this work",
-            "type": 3,
+            "name": "user1",
+            "description": "User to lookup Steam games for",
+            "type": 6,
             "required": true
+        },
+        {
+            "name": "user2",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": true
+        },
+        {
+            "name": "user3",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
+        },
+        {
+            "name": "user4",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
+        },
+        {
+            "name": "user5",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
+        },
+        {
+            "name": "user6",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
+        },
+        {
+            "name": "user7",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
+        },
+        {
+            "name": "user8",
+            "description": "Another user to lookup Steam games for",
+            "type": 6,
+            "required": false
         }
     ]
 }
