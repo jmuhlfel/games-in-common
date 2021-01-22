@@ -21,8 +21,11 @@ gem 'bootsnap', '>= 1.4.4', require: false
 
 gem 'dalli'
 gem 'ed25519' # signature verification
+gem 'hiredis'
 gem 'httparty'
+gem 'redis', require: ['redis', 'redis/connection/hiredis']
 gem 'sidekiq'
+gem 'sidekiq-unique-jobs'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'

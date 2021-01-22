@@ -3,14 +3,17 @@
 module Discord
   class Interaction
     include ActiveModel::Validations
+    include Discord::Mixins::UserMentionable
 
-    attr_reader :params
+    attr_reader :params, :id, :token
 
     validates :params, :token, presence: true
     validates :user_ids, presence: true, length: { minimum: 2 }
 
     def initialize(params)
       @params = params
+      @id = params[:id]
+      @token = params[:token]
     end
 
     def user_ids
@@ -19,30 +22,17 @@ module Discord
       end.map { |option| option['value'] }
     end
 
-    def token
-      @token ||= @params[:token]
-    end
-
     def response
       {
         type: 3, # hide the command, but show our response message
         data: {
           tts: false,
-          content: "Checking for authorization from #{mention_phrase}...",
-          embeds: [],
-          allowed_mentions: {
-            parse: []
-          }
+          embeds: [{
+            title: "Checking for authorization to pull Steam IDs for #{mention_phrase}...",
+            color: DISCORD_COLORS[:info_blue]
+          }]
         }
       }
-    end
-
-    def mention_phrase
-      user_ids.map { |id| mention(id) }.to_sentence
-    end
-
-    def mention(user_id)
-      "<@#{user_id}>"
     end
   end
 end

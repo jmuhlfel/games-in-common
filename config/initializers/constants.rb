@@ -6,3 +6,6 @@ DISCORD_API_HEADERS = {
   'Authorization' => "Bot #{ENV['DISCORD_BOT_TOKEN']}",
   'Content-Type' => 'application/json'
 }.freeze
+DISCORD_COLORS = {
+  info_blue: 4_886_754
+}.freeze

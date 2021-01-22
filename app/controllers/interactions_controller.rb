@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class InteractionsController < ActionController::API
-  before_action :verify_request
-
   PING_JSON = { type: 1 }.to_json.freeze
+
+  before_action :verify_request
 
   def create
     json = JSON.parse(request.body.read)
@@ -15,10 +15,8 @@ class InteractionsController < ActionController::API
       interaction = Discord::Interaction.new(params)
 
       if interaction.valid?
-        ResponseJob.perform_later(
-          user_ids: interaction.user_ids,
-          interaction_token: interaction.token
-        )
+        Discord::AuthCheckWorker.perform_async(interaction.token, interaction.user_ids)
+
         render json: interaction.response.to_json
       else
         head :bad_request
