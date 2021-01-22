@@ -5,6 +5,14 @@ module Discord
     include ActiveModel::Validations
     include Discord::Mixins::UserMentionable
 
+    SNARK = [
+      'finish my 120star run',
+      'go carpetless',
+      'do my taxes',
+      'eat a PB&J',
+      'make fun of @MOONMOON for dying again'
+    ].freeze
+
     attr_reader :params, :id, :token
 
     validates :params, :token, presence: true
@@ -28,7 +36,8 @@ module Discord
         data: {
           tts: false,
           embeds: [{
-            title: "Checking for authorization to pull Steam IDs for #{mention_phrase}...",
+            title: 'Checking for authorization...',
+            description: "Please wait while I ~#{SNARK.sample}~ check for authorization from #{mention_phrase}.",
             color: DISCORD_COLORS[:info_blue]
           }]
         }

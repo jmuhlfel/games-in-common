@@ -7,5 +7,6 @@ DISCORD_API_HEADERS = {
   'Content-Type' => 'application/json'
 }.freeze
 DISCORD_COLORS = {
-  info_blue: 4_886_754
+  info_blue: 4_886_754,
+  warn_yellow: 16_312_092
 }.freeze
