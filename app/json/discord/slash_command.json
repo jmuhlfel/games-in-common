@@ -12,7 +12,7 @@
             "name": "user2",
             "description": "Another user to lookup Steam games for",
             "type": 6,
-            "required": true
+            "required": false
         },
         {
             "name": "user3",

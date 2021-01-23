@@ -5,5 +5,5 @@ Rails.application.routes.draw do
 
   resource :interactions, only: %i[create]
 
-  get 'authorize', to: 'authorizations#create', as: :authorization
+  get 'authorize', to: 'authorizations#index', as: :authorization
 end

@@ -7,17 +7,17 @@ module Discord
 
     class << self
       def register!
-        HTTParty.post(GLOBAL_COMMAND_URL, headers: DISCORD_API_HEADERS, body: command_json)
+        HTTParty.post(GLOBAL_COMMAND_URL, headers: DISCORD_JSON_HEADERS, body: command_json)
       end
 
       def register_for_guild!(guild_id)
         guild_command_url = DISCORD_APP_URL + "/guilds/#{guild_id}" + COMMAND_URL_SUFFIX
 
-        HTTParty.post(guild_command_url, headers: DISCORD_API_HEADERS, body: command_json)
+        HTTParty.post(guild_command_url, headers: DISCORD_JSON_HEADERS, body: command_json)
       end
 
       def fetch
-        HTTParty.get(GLOBAL_COMMAND_URL, headers: DISCORD_API_HEADERS)
+        HTTParty.get(GLOBAL_COMMAND_URL, headers: DISCORD_JSON_HEADERS)
       end
 
       def command_json

@@ -7,30 +7,27 @@ module Discord
 
     SNARK = [
       'finish my 120star run',
-      'go carpetless',
       'do my taxes',
       'eat a PB&J',
-      'make fun of @MOONMOON for dying again'
+      'laugh at @MOONMOON for dying again'
     ].freeze
 
-    attr_reader :params, :id, :token
+    attr_reader :params, :token
 
-    validates :params, :token, presence: true
-    validates :user_ids, presence: true, length: { minimum: 2 }
+    validates :params, :token, :user_ids, presence: true
 
     def initialize(params)
       @params = params
-      @id = params[:id]
       @token = params[:token]
     end
 
     def schedule_workers!
       started_at = Time.now.utc.iso8601(3) # include milliseconds because why not
 
-      Discord::AuthCheckWorker.perform_async(token, user_ids, started_at)
+      Discord::Auth::CheckWorker.perform_async(token, user_ids, started_at)
 
       (1..5).each do |n|
-        Discord::AuthCheckWorker.perform_in(n.minutes, token, user_ids, started_at)
+        Discord::Auth::CheckWorker.perform_in(n.minutes, token, user_ids, started_at)
       end
     end
 
