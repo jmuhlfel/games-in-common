@@ -8,26 +8,45 @@ module Discord
     BASE_INTERACTION_URL = (DISCORD_API_URL_BASE + "webhooks/#{ENV['DISCORD_APP_ID']}/").freeze
     ORIGINAL_MESSAGE_SUFFIX = '/messages/@original'
 
-    sidekiq_options lock: :while_executing, on_conflict: :reschedule
+    AUTHORIZE_URL = 'https://games-in-common.herokuapp.com/authorize'
+    PRIVACY_POLICY_URL = 'https://discordapp.com'
 
-    def perform(interaction_token, discord_user_ids)
+    TIMEOUT = 5.minutes
+
+    sidekiq_options lock: :while_executing, on_conflict: :reschedule, lock_args_method: ->(args) { args.first(2) }
+
+    def perform(interaction_token, discord_user_ids, started_at)
       @interaction_token = interaction_token
       @discord_user_ids = discord_user_ids
+      @started_at = started_at
 
-      return if already_processing?
+      return if should_noop?
 
-      puts discord_auth_hash
       return update_original_message!(missing_auth_content) if unauthed_user_ids.present?
+
+      # we don't want to repeatedly check for Steam IDs
+      set_processing!
 
       return update_original_message!(missing_steam_id_content) if steamless_user_ids.present?
 
       # everyone's authenticated and has a steam ID - showtime!
       ResponseWorker.perform_async(@interaction_token, user_id_mapping)
-      set_processing!
+    end
+
+    def should_noop?
+      already_processing? || expired?
+    end
+
+    def expired?
+      Time.now > expires_at
+    end
+
+    def expires_at
+      @expires_at ||= @started_at + TIMEOUT
     end
 
     def discord_auth_hash
-      @discord_auth_hash ||= @discord_user_ids.each_with_object({}) do |user_id, memo|
+      @discord_auth_hash ||= @discord_user_ids.each.with_object({}) do |user_id, memo|
         memo[user_id] = Rails.cache.read(user_auth_key(user_id))
       end
     end
@@ -53,7 +72,8 @@ module Discord
       count = unauthed_user_ids.size
       description = <<~DESC
         #{mention_phrase(unauthed_user_ids)} must authorize `/gamesincommon` to pull their linked Steam #{'ID'.pluralize(count)}.
-        Please [click here](https://discordapp.com) to authorize.
+
+        Please [click here](#{AUTHORIZE_URL}) to authorize. *(#{mins_left.inspect} left | see my [privacy policy](#{PRIVACY_POLICY_URL}))*
       DESC
 
       {
@@ -80,6 +100,10 @@ module Discord
           color: DISCORD_COLORS[:warn_yellow]
         }]
       }
+    end
+
+    def mins_left
+      ([expires_at - Time.now, 0].max / 60).ceil.minutes
     end
 
     def already_processing?
