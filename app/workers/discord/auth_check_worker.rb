@@ -3,24 +3,28 @@
 module Discord
   class AuthCheckWorker
     include Sidekiq::Worker
+    include Rails.application.routes.url_helpers
     include Discord::Mixins::UserMentionable
 
-    BASE_INTERACTION_URL = (DISCORD_API_URL_BASE + "webhooks/#{ENV['DISCORD_APP_ID']}/").freeze
+    BASE_INTERACTION_URL = "#{DISCORD_API_URL_BASE}/webhooks/#{ENV['DISCORD_APP_ID']}/"
     ORIGINAL_MESSAGE_SUFFIX = '/messages/@original'
 
-    AUTHORIZE_URL = 'https://games-in-common.herokuapp.com/authorize'
-    PRIVACY_POLICY_URL = 'https://discordapp.com'
+    PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
 
     TIMEOUT = 5.minutes
+
+    class DiscordError < StandardError; end
 
     sidekiq_options lock: :while_executing, on_conflict: :reschedule, lock_args_method: ->(args) { args.first(2) }
 
     def perform(interaction_token, discord_user_ids, started_at)
       @interaction_token = interaction_token
       @discord_user_ids = discord_user_ids
-      @started_at = started_at
+      @started_at = Time.parse(started_at)
 
-      return if should_noop?
+      return if already_processing?
+
+      return update_original_message!(cancellation_content) if expired?
 
       return update_original_message!(missing_auth_content) if unauthed_user_ids.present?
 
@@ -33,12 +37,8 @@ module Discord
       ResponseWorker.perform_async(@interaction_token, user_id_mapping)
     end
 
-    def should_noop?
-      already_processing? || expired?
-    end
-
     def expired?
-      Time.now > expires_at
+      Time.now.utc > expires_at
     end
 
     def expires_at
@@ -73,7 +73,7 @@ module Discord
       description = <<~DESC
         #{mention_phrase(unauthed_user_ids)} must authorize `/gamesincommon` to pull their linked Steam #{'ID'.pluralize(count)}.
 
-        Please [click here](#{AUTHORIZE_URL}) to authorize. *(#{mins_left.inspect} left | see my [privacy policy](#{PRIVACY_POLICY_URL}))*
+        Please [click here](#{authorization_url}) to authorize. *(#{mins_left.inspect} left | see my [privacy policy](#{PRIVACY_POLICY_URL}))*
       DESC
 
       {
@@ -102,6 +102,19 @@ module Discord
       }
     end
 
+    def cancellation_content
+      count = unauthed_user_ids.size
+      verb = count == 1 ? 'is a' : 'are'
+
+      {
+        embeds: [{
+          title: 'Request cancelled.',
+          description: "#{mention_phrase(unauthed_user_ids)} #{verb} party #{'pooper'.pluralize(count)}. Sadge.",
+          color: DISCORD_COLORS[:uh_oh_red]
+        }]
+      }
+    end
+
     def mins_left
       ([expires_at - Time.now, 0].max / 60).ceil.minutes
     end
@@ -123,7 +136,24 @@ module Discord
     end
 
     def update_original_message!(data)
-      HTTParty.patch(original_message_url, headers: DISCORD_API_HEADERS, body: data.to_json)
+      response = HTTParty.patch(original_message_url, headers: DISCORD_API_HEADERS, body: data.to_json)
+
+      if response.not_found? && fresh?
+        # Sidekiq is so damn good, it sometimes executes this code
+        # *before Discord receives/creates the original message*. So
+        # it's possible our response message doesn't exist yet.
+        # Talk about good problems to have.
+        sleep(0.1)
+        return HTTParty.patch(original_message_url, headers: DISCORD_API_HEADERS, body: data.to_json)
+      end
+
+      return response if response.ok?
+
+      raise DiscordError, response.inspect
+    end
+
+    def fresh?
+      Time.now.utc < @started_at + 5.seconds
     end
 
     def original_message_url

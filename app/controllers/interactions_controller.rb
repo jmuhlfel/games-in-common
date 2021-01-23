@@ -15,7 +15,7 @@ class InteractionsController < ActionController::API
       interaction = Discord::Interaction.new(params)
 
       if interaction.valid?
-        Discord::AuthCheckWorker.perform_async(interaction.token, interaction.user_ids, Time.now)
+        interaction.schedule_workers!
 
         render json: interaction.response.to_json
       else
