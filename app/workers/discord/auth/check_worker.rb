@@ -4,38 +4,24 @@ module Discord
   module Auth
     class CheckWorker
       include Sidekiq::Worker
-      include Discord::Auth::Mixin
+      include Discord::Mixins::UpdateOriginalMessage
+      include Discord::Mixins::UserAuth
       include Discord::Mixins::UserMentionable
 
-      BASE_INTERACTION_URL = "#{DISCORD_API_URL_BASE}/webhooks/#{ENV['DISCORD_APP_ID']}/"
       CONNECTIONS_URL = "#{USER_URL}/connections"
-      ORIGINAL_MESSAGE_SUFFIX = '/messages/@original'
 
       PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
-
-      DELETION_TIMEOUT = 15.minutes # discord revokes tokens after this much time
 
       AUTH_ERROR_TEXT = '*(authorization timed out or declined)*'
       STEAM_ERROR_TEXT = '*(no linked Steam account)*'
 
-      RETRY_BACKOFFS = [0.1, 0.4, 1].freeze
-
       sidekiq_options lock: :while_executing,
                       on_conflict: :reschedule,
-                      lock_args_method: ->(args) { args.first(2) },
-                      retry: RETRY_BACKOFFS.size
+                      retry: false # too slow for our use case
 
-      sidekiq_retry_in do |count, exception|
-        case exception
-        when DiscordError
-          RETRY_BACKOFFS[count]
-        end
-      end
-
-      def perform(interaction_token, discord_user_ids, started_at)
+      def perform(interaction_token, discord_user_ids)
         @interaction_token = interaction_token
         @discord_user_ids = discord_user_ids
-        @started_at = Time.parse(started_at)
 
         return if already_processing?
 
@@ -141,12 +127,27 @@ module Discord
         "*(#{mins_left.inspect} left | see my [privacy policy](#{PRIVACY_POLICY_URL}))*"
       end
 
+      def started_at
+        @started_at ||= Time.now.utc - elapsed_seconds
+      end
+
+      def elapsed_seconds
+        ttl = Redis.current.ttl("interaction-#{@interaction_token}")
+        raise if ttl.negative?
+
+        (DELETION_TIMEOUT.to_i - ttl).seconds
+      end
+
+      def fresh?
+        Time.now.utc < started_at + 5.seconds
+      end
+
       def expired?
         Time.now.utc > expires_at && !already_processing?
       end
 
       def deleted?
-        Time.now.utc > @started_at + DELETION_TIMEOUT
+        Time.now.utc > started_at + DELETION_TIMEOUT
       end
 
       def mins_left
@@ -154,7 +155,7 @@ module Discord
       end
 
       def expires_at
-        @expires_at ||= @started_at + EXPIRATION_TIMEOUT
+        @expires_at ||= started_at + EXPIRATION_TIMEOUT
       end
 
       def already_processing?
@@ -167,22 +168,6 @@ module Discord
 
       def processing_key
         @processing_key ||= "interaction-#{@interaction_token}-processing"
-      end
-
-      def update_original_message!(data)
-        response = HTTParty.patch(original_message_url, headers: DISCORD_JSON_HEADERS, body: data.to_json)
-
-        return response if response.ok?
-
-        # Sidekiq is so damn fast, it sometimes runs this worker
-        # *before Discord receives/creates the original message*. So
-        # it's possible our response message doesn't exist yet.
-        # Talk about good problems to have. Try again!
-        raise DiscordError, response.inspect
-      end
-
-      def original_message_url
-        @original_message_url ||= BASE_INTERACTION_URL + @interaction_token + ORIGINAL_MESSAGE_SUFFIX
       end
     end
   end

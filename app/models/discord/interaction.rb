@@ -22,12 +22,12 @@ module Discord
     end
 
     def schedule_workers!
-      started_at = Time.now.utc.iso8601(3) # include milliseconds because why not
+      Redis.current.set("interaction-#{@token}", user_ids.to_json, ex: DELETION_TIMEOUT.to_i)
 
-      Discord::Auth::CheckWorker.perform_async(token, user_ids, started_at)
+      Discord::Auth::CheckWorker.perform_async(token, user_ids)
 
       (1..5).each do |n|
-        Discord::Auth::CheckWorker.perform_in(n.minutes, token, user_ids, started_at)
+        Discord::Auth::CheckWorker.perform_in(n.minutes, token, user_ids)
       end
     end
 

@@ -15,3 +15,4 @@ DISCORD_COLORS = {
 }.freeze
 
 EXPIRATION_TIMEOUT = 5.minutes
+DELETION_TIMEOUT = 15.minutes # discord revokes tokens after this much time
