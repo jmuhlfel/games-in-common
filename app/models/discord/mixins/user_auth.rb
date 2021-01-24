@@ -8,8 +8,6 @@ module Discord
 
       USER_URL = "#{DISCORD_API_URL_BASE}/users/@me"
 
-      class DiscordError < StandardError; end
-
       included do
         def user_headers(token)
           { 'Authorization' => "Bearer #{token}", 'Content-Type' => 'application/json' }

@@ -15,13 +15,12 @@ module Discord
       AUTH_ERROR_TEXT = '*(authorization timed out or declined)*'
       STEAM_ERROR_TEXT = '*(no linked Steam account)*'
 
-      sidekiq_options lock: :while_executing,
+      sidekiq_options lock:        :while_executing,
                       on_conflict: :reschedule,
-                      retry: false # too slow for our use case
+                      retry:       false # too slow for our use case
 
-      def perform(interaction_token, discord_user_ids)
+      def perform(interaction_token)
         @interaction_token = interaction_token
-        @discord_user_ids = discord_user_ids
 
         return if already_processing?
 
@@ -37,6 +36,12 @@ module Discord
         # everyone's authenticated and has a steam ID - showtime!
         set_processing!
         ResponseWorker.perform_async(@interaction_token, user_steam_id_mapping)
+      rescue StandardError
+        error_message = status_message_content('A server error occurred. Whoops.',
+                                               color: :uh_oh_red, footer: requestor_phrase)
+        update_original_message!(error_message)
+
+        raise
       end
 
       def unauthed_user_ids
@@ -49,14 +54,14 @@ module Discord
 
       # discord user id => auth token
       def user_token_mapping
-        @user_token_mapping ||= @discord_user_ids.each.with_object({}) do |user_id, memo|
+        @user_token_mapping ||= interaction_data[:user_ids].each.with_object({}) do |user_id, memo|
           memo[user_id] = Rails.cache.read(user_token_cache_key(user_id))
         end
       end
 
       # discord user id => steam id
       def user_steam_id_mapping
-        @user_steam_id_mapping ||= @discord_user_ids.each.with_object({}) do |user_id, memo|
+        @user_steam_id_mapping ||= interaction_data[:user_ids].each.with_object({}) do |user_id, memo|
           memo[user_id] = fetch_user_steam_id(user_id)
         end
       end
@@ -78,9 +83,9 @@ module Discord
 
         {
           embeds: [{
-            title: 'Authorization needed',
+            title:       'Authorization needed',
             description: description,
-            color: DISCORD_COLORS[:info_blue]
+            color:       DISCORD_COLORS[:info_blue]
           }]
         }
       end
@@ -96,9 +101,9 @@ module Discord
 
         {
           embeds: [{
-            title: "Missing Steam #{'account'.pluralize(count)}!",
+            title:       "Missing Steam #{'account'.pluralize(count)}!",
             description: description,
-            color: DISCORD_COLORS[:warn_yellow]
+            color:       DISCORD_COLORS[:warn_yellow]
           }]
         }
       end
@@ -116,30 +121,15 @@ module Discord
 
         {
           embeds: [{
-            title: 'Request cancelled.',
+            title:       'Request cancelled.',
             description: description,
-            color: DISCORD_COLORS[:uh_oh_red]
+            color:       DISCORD_COLORS[:uh_oh_red]
           }]
         }
       end
 
       def timer_privacy_blurb
         "*(#{mins_left.inspect} left | see my [privacy policy](#{PRIVACY_POLICY_URL}))*"
-      end
-
-      def started_at
-        @started_at ||= Time.now.utc - elapsed_seconds
-      end
-
-      def elapsed_seconds
-        ttl = Redis.current.ttl("interaction-#{@interaction_token}")
-        raise if ttl.negative?
-
-        (DELETION_TIMEOUT.to_i - ttl).seconds
-      end
-
-      def fresh?
-        Time.now.utc < started_at + 5.seconds
       end
 
       def expired?
@@ -159,15 +149,11 @@ module Discord
       end
 
       def already_processing?
-        !!Rails.cache.read(processing_key)
+        !!Redis.current.get(processing_key)
       end
 
       def set_processing!
-        Rails.cache.write(processing_key, true, expires_in: DELETION_TIMEOUT)
-      end
-
-      def processing_key
-        @processing_key ||= "interaction-#{@interaction_token}-processing"
+        Redis.current.set(processing_key, true, ex: DELETION_TIMEOUT.to_i)
       end
     end
   end

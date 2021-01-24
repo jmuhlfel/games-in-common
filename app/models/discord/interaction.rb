@@ -22,13 +22,20 @@ module Discord
     end
 
     def schedule_workers!
-      Redis.current.set("interaction-#{@token}", user_ids.to_json, ex: DELETION_TIMEOUT.to_i)
+      Redis.current.set("interaction-#{@token}", cache_data.to_json, ex: DELETION_TIMEOUT.to_i)
 
-      Discord::Auth::CheckWorker.perform_async(token, user_ids)
+      Discord::Auth::CheckWorker.perform_async(token)
 
       (1..5).each do |n|
-        Discord::Auth::CheckWorker.perform_in(n.minutes, token, user_ids)
+        Discord::Auth::CheckWorker.perform_in(n.minutes, token)
       end
+    end
+
+    def cache_data
+      {
+        user_ids:     user_ids,
+        calling_user: calling_user
+      }
     end
 
     def user_ids
@@ -37,15 +44,21 @@ module Discord
       end.map { |option| option['value'] }
     end
 
+    def calling_user
+      @calling_user ||= (@params.dig(:member, :user) || ActionController::Parameters.new).permit(:id, :username).slice(
+        :id, :username
+      ).to_h
+    end
+
     def response
       {
         type: 3, # hide the command, but show our response message
         data: {
-          tts: false,
+          tts:    false,
           embeds: [{
-            title: 'Checking for authorization...',
+            title:       'Checking for authorization...',
             description: "Please wait while I ~~#{SNARK.sample}~~ check for authorization from #{mention_phrase}.",
-            color: DISCORD_COLORS[:info_blue]
+            color:       DISCORD_COLORS[:info_blue]
           }]
         }
       }

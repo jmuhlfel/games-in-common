@@ -3,9 +3,9 @@
 class AuthorizationsController < ApplicationController
   DISCORD_AUTH_URL_BASE = "#{DISCORD_OAUTH_API_URL_BASE}/authorize"
   DISCORD_AUTH_DATA = {
-    client_id: ENV['DISCORD_APP_ID'],
+    client_id:     ENV['DISCORD_APP_ID'],
     response_type: 'code',
-    scope: 'identify connections'
+    scope:         'identify connections'
   }.freeze
 
   def index
