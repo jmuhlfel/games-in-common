@@ -41,7 +41,7 @@ module Discord
     def user_ids
       @user_ids ||= Array(@params.dig(:data, :options)).select do |option|
         option['name'].starts_with? 'user'
-      end.map { |option| option['value'] }
+      end.map { |option| option['value'] }.uniq
     end
 
     def calling_user

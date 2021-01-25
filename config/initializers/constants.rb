@@ -3,6 +3,7 @@
 DISCORD_API_URL_BASE = 'https://discord.com/api/v8'
 DISCORD_APP_URL = (DISCORD_API_URL_BASE + "/applications/#{ENV['DISCORD_APP_ID']}").freeze
 DISCORD_OAUTH_API_URL_BASE = 'https://discord.com/api/oauth2'
+DISCORD_AUTH_URL_BASE = "#{DISCORD_OAUTH_API_URL_BASE}/authorize"
 DISCORD_JSON_HEADERS = {
   'Authorization' => "Bot #{ENV['DISCORD_BOT_TOKEN']}",
   'Content-Type'  => 'application/json'

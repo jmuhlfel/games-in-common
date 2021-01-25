@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class AuthorizationsController < ApplicationController
-  DISCORD_AUTH_URL_BASE = "#{DISCORD_OAUTH_API_URL_BASE}/authorize"
+class AuthorizationController < ApplicationController
   DISCORD_AUTH_DATA = {
     client_id:     ENV['DISCORD_APP_ID'],
     response_type: 'code',

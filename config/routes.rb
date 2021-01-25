@@ -3,7 +3,9 @@
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 
-  resource :interactions, only: %i[create]
+  get 'invite', to: 'invite#index', as: :invite
 
-  get 'authorize', to: 'authorizations#index', as: :authorization
+  get 'authorize', to: 'authorization#index', as: :authorization
+
+  resource :interactions, only: %i[create]
 end
