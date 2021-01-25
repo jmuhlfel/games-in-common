@@ -7,6 +7,7 @@ module Steam
       key:    ENV['STEAM_API_KEY'],
       format: 'json'
     }.freeze
+    NO_STATS = { total: 0, recent: 0 }.freeze
 
     class << self
       def fetch(steam_user_id)
@@ -40,8 +41,9 @@ module Steam
       @data = data
     end
 
+    # always returns an int for both total and recent playtime
     def stats(game_id)
-      dig(:games, game_id) || {}
+      dig(:games, game_id)&.reverse_merge(NO_STATS) || NO_STATS
     end
 
     def game_ids

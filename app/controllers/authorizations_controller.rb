@@ -30,6 +30,8 @@ class AuthorizationsController < ApplicationController
     end
   end
 
+  # I'm pretty sure a 4 year old with privileged access could figure
+  # out how to break this "stateful" handshake. TODO.
   def redirect_to_discord_auth!
     state = SecureRandom.hex
 

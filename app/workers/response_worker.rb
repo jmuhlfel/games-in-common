@@ -46,6 +46,10 @@ class ResponseWorker
     end
   end
 
+  def libraries
+    @libraries ||= discord_library_mapping.values
+  end
+
   def matching_games
     return @matching_games if @matching_games
 
@@ -67,7 +71,7 @@ class ResponseWorker
   end
 
   def common_game_ids
-    @common_game_ids ||= discord_library_mapping.values.map(&:game_ids).reduce(:&)
+    @common_game_ids ||= libraries.map(&:game_ids).reduce(:&)
   end
 
   def result_content
@@ -77,16 +81,17 @@ class ResponseWorker
   end
 
   def final_games
-    @final_games ||= matching_games.values.sort_by { |game| game_score(game) }.first(NUM_RESULTS)
+    @final_games ||= matching_games.values.sort_by { |game| total_game_score(game) }.reverse.first(NUM_RESULTS)
   end
 
-  def game_score(game)
-    libraries = discord_library_mapping.values
-    total_playtime = libraries.sum { |library| library.stats(game.id)[:total] || 0 }
-    recent_playtime = libraries.sum { |library| library.stats(game.id)[:recent] || 0 }
+  def total_game_score(game)
+    user_ids.sum { |user_id| game_score(user_id, game.id) }
+  end
 
-    # negative score -> larger numbers go first
-    -(total_playtime + recent_playtime * RECENCY_MULTIPLIER)
+  def game_score(user_id, game_id)
+    stats = user_stats(user_id, game_id)
+
+    stats[:total] + stats[:recent] * RECENCY_MULTIPLIER
   end
 
   def summary_embed
@@ -96,10 +101,10 @@ class ResponseWorker
     else
       "the top #{result_count} for #{mention_phrase(user_ids)}"
     end
-    matching_games_phrase = "#{matching_games.size} matching #{'game'.pluralize matching_games.size}"
+    matching_games_phrase = "#{matching_games.size} multiplayer #{'game'.pluralize matching_games.size}"
 
     {
-      description: "Here's #{user_phrase} by playtime (of #{matching_games_phrase})",
+      description: "Here's #{user_phrase} by playtime (of #{matching_games_phrase}):",
       color:       DISCORD_COLORS[:yay_green],
       footer:      { text: footer }
     }
@@ -111,7 +116,7 @@ class ResponseWorker
 
   def game_embed(game, idx)
     fields = if user_ids.one?
-      total, recent = user_playtimes(user_ids.first, game.id)
+      total, recent = user_stats(user_ids.first, game.id).values
 
       [
         { name: 'Total playtime', value: pretty_playtime(total), inline: true },
@@ -131,20 +136,41 @@ class ResponseWorker
     }
   end
 
-  def user_playtimes(user_id, game_id)
-    discord_library_mapping[user_id].stats(game_id).slice(:total, :recent).values
+  def user_stats(user_id, game_id)
+    discord_library_mapping[user_id].stats(game_id)
   end
 
-  def pretty_playtime(mins)
-    return 'none' if mins.nil? || mins.zero?
-    return mins.minutes.inspect if mins < 60
+  def pretty_playtime(mins, suffix: nil)
+    return "none #{suffix}".strip if mins.nil? || mins.zero?
+    return mins.minutes.inspect if mins < 60 && suffix.nil?
 
+    suffix ||= 'hours'
     hours = (mins / 60.0).truncate(1)
 
-    "#{number_with_delimiter(hours)} hours"
+    "#{number_with_delimiter(hours)} #{suffix}"
   end
 
-  def multi_user_game_fields(game); end
+  def multi_user_game_fields(game)
+    total_playtime = pretty_playtime(libraries.sum { |library| library.stats(game.id)[:total] })
+    score_groups = user_ids.group_by { |user_id| game_score(user_id, game.id) }
+    min_user_playtimes, max_user_playtimes = score_groups.minmax.map do |user_ids|
+      user_ids.map { |user_id| user_playtime_phrase(user_id) }.to_sentence
+    end
+
+    [
+      { name: 'Total playtime', value: total_playtime, inline: true },
+      { name: 'Most playtime', value: max_user_playtimes, inline: true },
+      { name: 'Least playtime', value: min_user_playtimes, inline: true }
+    ]
+  end
+
+  def user_playtime_phrase(user_id)
+    stats = user_stats(user_id, game.id)
+    total_hours = pretty_playtime(stats[:total])
+    recent_hours = pretty_playtime(stats[:recent], suffix: 'recent')
+
+    "#{mention(user_id)} with #{total_hours} (#{recent_hours})"
+  end
 
   def user_ids
     @user_ids ||= @user_id_mapping.keys
