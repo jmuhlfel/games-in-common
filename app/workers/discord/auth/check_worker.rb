@@ -10,8 +10,6 @@ module Discord
 
       CONNECTIONS_URL = "#{USER_URL}/connections"
 
-      PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
-
       AUTH_ERROR_TEXT = '*(authorization timed out or declined)*'
       STEAM_ERROR_TEXT = '*(no linked Steam account)*'
 
@@ -40,6 +38,7 @@ module Discord
         error_message = status_message_content('A server error occurred. Whoops.',
                                                color: :uh_oh_red, footer: requestor_phrase)
         update_original_message!(error_message)
+        set_processing!
 
         raise
       end
@@ -85,7 +84,8 @@ module Discord
           embeds: [{
             title:       'Authorization needed',
             description: description,
-            color:       DISCORD_COLORS[:info_blue]
+            color:       DISCORD_COLORS[:info_blue],
+            footer:      { text: requestor_phrase }
           }]
         }
       end
@@ -94,7 +94,7 @@ module Discord
         count = steamless_user_ids.size
         verb = count == 1 ? "hasn't" : "haven't"
         description = <<~DESC
-          #{mention_phrase(steamless_user_ids)} #{verb} linked their Steam #{'account'.pluralize(count)}.
+          #{mention_phrase(steamless_user_ids)} #{verb} linked their Steam #{'account'.pluralize(count)} to Discord.
 
           Please link your account in User Settings > Connections > Steam. #{timer_privacy_blurb}
         DESC
@@ -103,7 +103,8 @@ module Discord
           embeds: [{
             title:       "Missing Steam #{'account'.pluralize(count)}!",
             description: description,
-            color:       DISCORD_COLORS[:warn_yellow]
+            color:       DISCORD_COLORS[:warn_yellow],
+            footer:      { text: requestor_phrase }
           }]
         }
       end
@@ -123,7 +124,8 @@ module Discord
           embeds: [{
             title:       'Request cancelled.',
             description: description,
-            color:       DISCORD_COLORS[:uh_oh_red]
+            color:       DISCORD_COLORS[:uh_oh_red],
+            footer:      { text: requestor_phrase }
           }]
         }
       end

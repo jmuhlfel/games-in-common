@@ -16,5 +16,7 @@ DISCORD_COLORS = {
   uh_oh_red:   13_632_027
 }.freeze
 
+PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
+
 EXPIRATION_TIMEOUT = 5.minutes
 DELETION_TIMEOUT = 15.minutes # discord revokes tokens after this much time

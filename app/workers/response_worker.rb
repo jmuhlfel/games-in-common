@@ -25,7 +25,11 @@ class ResponseWorker
     @user_id_mapping = user_id_mapping # discord user id => steam user id
 
     update_original_message!(status_message_content(STATUS_MESSAGES[:steam_library]))
-    discord_library_mapping
+
+    if invisible_library_user_ids.present?
+      update_original_message!(invisible_message_content)
+      return
+    end
 
     update_original_message!(status_message_content(STATUS_MESSAGES[:steam_games]))
     matching_games
@@ -101,7 +105,8 @@ class ResponseWorker
     else
       "the top #{result_count} for #{mention_phrase(user_ids)}"
     end
-    matching_games_phrase = "#{matching_games.size} multiplayer #{'game'.pluralize matching_games.size}"
+    matching = 'matching ' if user_ids.many?
+    matching_games_phrase = "#{matching_games.size} #{matching}multiplayer #{'game'.pluralize matching_games.size}"
 
     {
       description: "Here's #{user_phrase} by playtime (of #{matching_games_phrase}):",
@@ -136,6 +141,33 @@ class ResponseWorker
     }
   end
 
+  def invisible_library_user_ids
+    @invisible_library_user_ids ||= discord_library_mapping.select do |_discord_user_id, library|
+      library.nil?
+    end.keys
+  end
+
+  def invisible_message_content
+    count = invisible_library_user_ids.size
+    libraries_word = 'library'.pluralize(count)
+    appear_word = count == 1 ? 'appears' : 'appear'
+    description = <<~DESC
+      #{mention_phrase(invisible_library_user_ids)} #{appear_word} \
+      to have their Steam #{libraries_word} set to "private".
+
+      Please check your privacy settings in Steam and then try again.
+    DESC
+
+    {
+      embeds: [{
+        title:       "Couldn't access #{count} Steam #{libraries_word}",
+        description: description,
+        color:       DISCORD_COLORS[:uh_oh_red],
+        footer:      { text: footer }
+      }]
+    }
+  end
+
   def user_stats(user_id, game_id)
     discord_library_mapping[user_id].stats(game_id)
   end
@@ -153,19 +185,20 @@ class ResponseWorker
   def multi_user_game_fields(game)
     total_playtime = pretty_playtime(libraries.sum { |library| library.stats(game.id)[:total] })
     score_groups = user_ids.group_by { |user_id| game_score(user_id, game.id) }
-    min_user_playtimes, max_user_playtimes = score_groups.minmax.map do |user_ids|
-      user_ids.map { |user_id| user_playtime_phrase(user_id) }.to_sentence
+    min_user_playtimes, max_user_playtimes = score_groups.minmax.map do |grouping|
+      grouping.last.map { |user_id| user_playtime_phrase(user_id, game.id) }.to_sentence
     end
 
     [
       { name: 'Total playtime', value: total_playtime, inline: true },
       { name: 'Most playtime', value: max_user_playtimes, inline: true },
-      { name: 'Least playtime', value: min_user_playtimes, inline: true }
-    ]
+      { name: 'Least playtime', value: min_user_playtimes, inline: true },
+      game.metascore_field
+    ].compact
   end
 
-  def user_playtime_phrase(user_id)
-    stats = user_stats(user_id, game.id)
+  def user_playtime_phrase(user_id, game_id)
+    stats = user_stats(user_id, game_id)
     total_hours = pretty_playtime(stats[:total])
     recent_hours = pretty_playtime(stats[:recent], suffix: 'recent')
 

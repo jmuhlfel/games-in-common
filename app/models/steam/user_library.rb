@@ -11,12 +11,13 @@ module Steam
 
     class << self
       def fetch(steam_user_id)
-        data = Rails.cache.fetch("steam-library-#{steam_user_id}", expires_in: 4.hours) do
+        data = Rails.cache.fetch("steam-library-#{steam_user_id}", expires_in: 4.hours, skip_nil: true) do
           data = LIBRARY_API_DATA.merge(steamid: steam_user_id)
           response = HTTParty.get(LIBRARY_API_URL, query: data)
           raise Exceptions::SteamError, response.inspect unless response.ok?
 
           response = response['response'] # plz respond
+          next if response.blank? # won't cache the nil, user can try again immediately
 
           {
             total_count: response['game_count'],
@@ -24,7 +25,7 @@ module Steam
           }
         end
 
-        new(data)
+        new(data) if data
       end
 
       def data_from_game(game)

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AuthorizationController < ApplicationController
+class AuthorizationController < ActionController::Base
   DISCORD_AUTH_DATA = {
     client_id:     ENV['DISCORD_APP_ID'],
     response_type: 'code',
@@ -13,6 +13,7 @@ class AuthorizationController < ApplicationController
     elsif params[:error] == 'access_denied'
       # user denied - cry
       @denied = true
+      render status: :unauthorized
     else
       # fresh auth request - send 'em to Discord
       redirect_to_discord_auth!
@@ -25,7 +26,7 @@ class AuthorizationController < ApplicationController
     if Rails.cache.read("oauth-state-#{params[:state]}")
       Discord::Auth::HandshakeWorker.perform_async(params[:code])
     else
-      head :unauthorized
+      render status: :unauthorized
     end
   end
 

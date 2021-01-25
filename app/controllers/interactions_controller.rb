@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InteractionsController < ActionController::API
+class InteractionsController < ApplicationController
   PING_JSON = { type: 1 }.to_json.freeze
 
   before_action :verify_request

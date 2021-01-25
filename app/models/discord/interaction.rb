@@ -26,8 +26,8 @@ module Discord
 
       Discord::Auth::CheckWorker.perform_async(token)
 
-      (1..5).each do |n|
-        Discord::Auth::CheckWorker.perform_in(n.minutes, token)
+      (1..10).each do |n|
+        Discord::Auth::CheckWorker.perform_in(30.seconds * n, token)
       end
     end
 

@@ -1,0 +1,10 @@
+<% if response.unauthorized? %>
+  <% if @denied %>
+    <h2>Authorization cancelled!</h2>
+    <h4>Aw, 'cmon! You can trust me, I swear! I wrote a <%= link_to('privacy policy', PRIVACY_POLICY_URL) %> and everything!</h4>
+  <% else %>
+    <h2>Authorization failed.</h2>
+  <% end %>
+<% else %>
+  <h1>Authorized!</h1>
+<% end %>
