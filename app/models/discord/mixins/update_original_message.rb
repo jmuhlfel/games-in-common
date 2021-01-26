@@ -74,7 +74,7 @@ module Discord
           }
           embed.merge!(footer: { text: footer }) if footer
 
-          { embeds: [embed], flags: 64 }
+          { embeds: [embed] }
         end
 
         def interaction_data
@@ -96,6 +96,8 @@ module Discord
               Redis.current.set(RATE_LIMIT_KEY, remaining - 1, xx: true, keepttl: true)
             else
               ttl_ms = Redis.current.pttl(RATE_LIMIT_KEY)
+              puts '----------------------------------------------------'
+              puts "sleping for #{ttl_ms / 1000.0} ms"
               sleep(ttl_ms / 1000.0)
             end
           end
