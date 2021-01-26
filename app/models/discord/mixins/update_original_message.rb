@@ -7,22 +7,21 @@ module Discord
 
       BASE_INTERACTION_URL = "#{DISCORD_API_URL_BASE}/webhooks/#{ENV['DISCORD_APP_ID']}/"
       ORIGINAL_MESSAGE_SUFFIX = '/messages/@original'
+      RATE_LIMIT_KEY = 'message-rate-limit'
+      MUTEX = Mutex.new
 
       included do
         def update_original_message!(data)
+          check_rate_limit!
+
           response = HTTParty.patch(original_message_url, headers: DISCORD_JSON_HEADERS, body: data.to_json)
 
-          if response.not_found? && fresh? || response.too_many_requests?
-            # Sidekiq is so damn fast, it sometimes runs the worker
-            # *before Discord receives/creates the original message*. So
-            # it's possible our response message doesn't exist yet.
-            # Talk about good problems to have. Try again!
-            duration = if response.too_many_requests?
-              response['retry_after']
-            else
-              0.1
-            end
-            sleep(duration)
+          # Sidekiq is so damn fast, it sometimes runs the worker
+          # *before Discord receives/creates the original message*. So
+          # it's possible our response message doesn't exist yet.
+          # Talk about good problems to have. Try again!
+          if response.not_found? && fresh?
+            sleep(0.1)
             response = response.request.perform
 
             if response.not_found? && fresh?
@@ -30,7 +29,12 @@ module Discord
               sleep(0.4)
               response = response.request.perform
             end
+          elsif response.too_many_requests? # rate limit backoff
+            sleep(response['retry_after'])
+            response = response.request.perform
           end
+
+          update_rate_limit!(response)
 
           return response if response.ok?
 
@@ -79,6 +83,33 @@ module Discord
 
         def processing_key
           @processing_key ||= "processing-interaction-#{@interaction_token}"
+        end
+
+        def check_rate_limit!
+          MUTEX.synchronize do
+            remaining = Redis.current.get(RATE_LIMIT_KEY)
+            return if remaining.nil?
+
+            remaining = remaining.to_i
+
+            if remaining.positive?
+              Redis.current.set(RATE_LIMIT_KEY, remaining - 1, xx: true, keepttl: true)
+            else
+              ttl_ms = Redis.current.pttl(RATE_LIMIT_KEY)
+              puts '----------------------------------------------------'
+              puts "sleping for #{ttl_ms / 1000.0} ms"
+              sleep(ttl_ms / 1000.0)
+            end
+          end
+        end
+
+        def update_rate_limit!(response)
+          ttl_ms = (response.headers['x-ratelimit-reset-after'].first.to_f * 1000).to_i
+          return unless ttl_ms.positive?
+
+          remaining = response.headers['x-ratelimit-remaining'].first.to_i
+
+          Redis.current.set(RATE_LIMIT_KEY, remaining, px: ttl_ms)
         end
       end
     end
