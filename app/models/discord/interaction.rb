@@ -55,6 +55,7 @@ module Discord
         type: 3, # hide the command, but show our response message
         data: {
           tts:    false,
+          flags:  64,
           embeds: [{
             title:       'Checking for authorization...',
             description: "Please wait while I ~~#{SNARK.sample}~~ check for authorization from #{mention_phrase}.",
