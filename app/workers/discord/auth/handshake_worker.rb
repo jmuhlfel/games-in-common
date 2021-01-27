@@ -5,6 +5,7 @@ module Discord
     class HandshakeWorker
       include Sidekiq::Worker
       include Discord::Mixins::UserAuth
+      include Discord::Mixins::CanRerunAuthChecks
 
       TOKEN_URL = "#{DISCORD_OAUTH_API_URL_BASE}/token"
       TOKEN_DATA = {
@@ -42,24 +43,8 @@ module Discord
         HTTParty.get(USER_URL, headers: user_headers(token))
       end
 
-      def rerun_matching_auth_checks!
-        cursor = nil
-        keys = Set.new
-
-        until !cursor.nil? && cursor == '0'
-          results = Redis.current.scan(cursor || 0, match: 'interaction-*')
-          cursor = results.first
-          keys.merge(results.last)
-        end
-
-        keys.each do |key|
-          discord_user_ids = JSON.parse(Redis.current.get(key))['user_ids']
-          next unless discord_user_ids.include?(@discord_user_id)
-
-          interaction_token = key.delete_prefix('interaction-')
-
-          Discord::Auth::CheckWorker.perform_async(interaction_token)
-        end
+      def discord_user_ids
+        @discord_user_ids ||= [@discord_user_id]
       end
     end
   end

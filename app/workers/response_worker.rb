@@ -18,6 +18,8 @@ class ResponseWorker
     error:         'An error occurred while pulling Steam data.'
   }.freeze
 
+  CROSS_MARK = "\u274c"
+
   sidekiq_options retry: false # too slow for our use case
 
   def perform(interaction_token, user_id_mapping)
@@ -36,7 +38,10 @@ class ResponseWorker
 
     update_original_message!(status_message_content(STATUS_MESSAGES[:working]))
 
-    update_original_message!(result_content)
+    response = update_original_message!(result_content)
+
+    message = Discordrb::Message.new(response.to_h, DISCORD_BOT)
+    message.react CROSS_MARK
   rescue StandardError
     message = status_message_content(STATUS_MESSAGES[:error], color: :uh_oh_red, footer: footer)
     update_original_message!(message)
@@ -79,13 +84,23 @@ class ResponseWorker
   end
 
   def result_content
-    {
-      embeds: [summary_embed, *final_games.map.with_index { |game, idx| game_embed(game, idx) }]
-    }
+    embeds = if final_games.empty? # truly the saddest edge case
+      word = user_ids.one? ? "doesn't" : "don't"
+
+      [{
+        description: "It seems that #{mention_phrase} #{word} have any matching games. I'm... I'm so sorry.",
+        color:       DISCORD_COLORS[:sadge_grey],
+        footer:      { text: footer }
+      }]
+    else
+      [summary_embed, *final_games.map.with_index { |game, idx| game_embed(game, idx) }]
+    end
+
+    { embeds: embeds }
   end
 
   def final_games
-    @final_games ||= matching_games.values.sort_by { |game| total_game_score(game) }.reverse.first(NUM_RESULTS)
+    @final_games ||= matching_games.values.sort_by { |game| -total_game_score(game) }.first(NUM_RESULTS)
   end
 
   def total_game_score(game)

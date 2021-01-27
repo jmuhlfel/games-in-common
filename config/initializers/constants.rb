@@ -13,7 +13,8 @@ DISCORD_COLORS = {
   yay_green:   5_874_944,
   info_blue:   4_886_754,
   warn_yellow: 16_312_092,
-  uh_oh_red:   13_632_027
+  uh_oh_red:   13_632_027,
+  sadge_grey:  10_197_915
 }.freeze
 
 PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'

@@ -24,6 +24,16 @@ module Discord
 
         if expired?
           update_original_message!(cancellation_content) unless deleted?
+          return set_processing!
+        end
+
+        if checked_presence?
+          if absent_user_ids.present?
+            set_processing!
+            return update_original_message!(absent_users_content)
+          end
+        else
+          request_presence_check! unless requested_presence_check?
           return
         end
 
@@ -41,6 +51,12 @@ module Discord
         set_processing!
 
         raise
+      end
+
+      def absent_user_ids
+        @absent_user_ids ||= interaction_data[:user_ids].reject do |user_id|
+          Redis.current.get("user-present-#{user_id}")
+        end
       end
 
       def unauthed_user_ids
@@ -70,6 +86,20 @@ module Discord
         response = HTTParty.get(CONNECTIONS_URL, headers: headers)
 
         response.to_a.find { |connection| connection['type'] == 'steam' }.try(:[], 'id')
+      end
+
+      def absent_users_content
+        count = absent_user_ids.size
+        word = count == 1 ? 'is' : 'are'
+
+        {
+          embeds: [{
+            title:       "#{'User'.pluralize count} #{word} not online",
+            description: "#{mention_phrase(absent_user_ids)} must be online for `/gamesincommon` to function.",
+            color:       DISCORD_COLORS[:sadge_grey],
+            footer:      { text: requestor_phrase }
+          }]
+        }
       end
 
       def missing_auth_content
@@ -156,6 +186,25 @@ module Discord
 
       def set_processing!
         Redis.current.set(processing_key, true, ex: DELETION_TIMEOUT.to_i)
+      end
+
+      def checked_presence?
+        !!Redis.current.get("presence-checked-interaction-#{@interaction_token}")
+      end
+
+      def request_presence_check!
+        DISCORD_BOT.gateway.send_packet(8, { # request member chunks op
+                                          guild_id:  interaction_data[:guild_id],
+                                          query:     '',
+                                          limit:     0,
+                                          presences: true,
+                                          user_ids:  interaction_data[:user_ids]
+                                        })
+        Redis.current.set("requested-presence-interaction-#{@interaction_token}", true, ex: EXPIRATION_TIMEOUT.to_i)
+      end
+
+      def requested_presence_check?
+        !!Redis.current.get("requested-presence-interaction-#{@interaction_token}")
       end
     end
   end

@@ -20,6 +20,7 @@ gem 'puma', '~> 5.0'
 gem 'bootsnap', '>= 1.4.4', require: false
 
 gem 'dalli'
+gem 'discordrb'
 gem 'ed25519' # signature verification
 gem 'hiredis'
 gem 'httparty'

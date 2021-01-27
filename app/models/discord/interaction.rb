@@ -34,6 +34,7 @@ module Discord
     def cache_data
       {
         user_ids:     user_ids,
+        guild_id:     @params[:guild_id],
         calling_user: calling_user
       }
     end

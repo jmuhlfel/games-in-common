@@ -96,8 +96,6 @@ module Discord
               Redis.current.set(RATE_LIMIT_KEY, remaining - 1, xx: true, keepttl: true)
             else
               ttl_ms = Redis.current.pttl(RATE_LIMIT_KEY)
-              puts '----------------------------------------------------'
-              puts "sleping for #{ttl_ms / 1000.0} ms"
               sleep(ttl_ms / 1000.0)
             end
           end
