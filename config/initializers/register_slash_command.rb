@@ -2,4 +2,4 @@
 
 # make sure Discord has the latest configuration for our slash command
 
-Discord::SlashCommand.register!
+Discord::SlashCommands.register!

@@ -17,8 +17,8 @@ module Discord
           end
 
           keys.each do |key|
-            discord_user_ids = JSON.parse(Redis.current.get(key))['user_ids']
-            next unless (discord_user_ids & @discord_user_ids).present?
+            parsed_discord_user_ids = JSON.parse(Redis.current.get(key))['user_ids']
+            next unless (parsed_discord_user_ids & discord_user_ids).present?
 
             interaction_token = key.delete_prefix('interaction-')
 

@@ -15,7 +15,7 @@ class InteractionsController < ApplicationController
       interaction = Discord::Interaction.new(params)
 
       if interaction.valid?
-        interaction.schedule_workers!
+        interaction.perform!
 
         render json: interaction.response.to_json
       else
