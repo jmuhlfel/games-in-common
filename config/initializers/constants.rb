@@ -20,4 +20,7 @@ DISCORD_COLORS = {
 PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
 
 EXPIRATION_TIMEOUT = 5.minutes
+SOFT_DELETION_TIMEOUT = 10.minutes
 DELETION_TIMEOUT = 15.minutes # discord revokes tokens after this much time
+
+CROSS_MARK = "\u274c"

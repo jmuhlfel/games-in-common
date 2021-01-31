@@ -7,11 +7,13 @@ module Discord
 
     attr_reader :discord_user_ids
 
+    sidekiq_options retry: false # too slow for our use case
+
     def perform(discord_user_ids)
       @discord_user_ids = discord_user_ids
 
       discord_user_ids.each do |user_id|
-        Redis.current.set("user-present-#{user_id}", true, ex: 60)
+        Redis.current.set("user-present-#{user_id}", true, ex: EXPIRATION_TIMEOUT.to_i)
       end
 
       rerun_matching_auth_checks! do |matching_interaction_token|

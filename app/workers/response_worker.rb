@@ -18,8 +18,6 @@ class ResponseWorker
     error:         'An error occurred while pulling Steam data.'
   }.freeze
 
-  CROSS_MARK = "\u274c"
-
   sidekiq_options retry: false # too slow for our use case
 
   def perform(interaction_token, user_id_mapping)
@@ -38,10 +36,7 @@ class ResponseWorker
 
     update_original_message!(status_message_content(STATUS_MESSAGES[:working]))
 
-    response = update_original_message!(result_content)
-
-    message = Discordrb::Message.new(response.to_h, DISCORD_BOT)
-    message.react CROSS_MARK
+    send_result_message!
   rescue StandardError
     message = status_message_content(STATUS_MESSAGES[:error], color: :uh_oh_red, footer: footer)
     update_original_message!(message)
@@ -81,6 +76,23 @@ class ResponseWorker
 
   def common_game_ids
     @common_game_ids ||= libraries.map(&:game_ids).reduce(:&)
+  end
+
+  def send_result_message!
+    results = result_content
+
+    Redis.current.set("token-#{@interaction_token}-payload", results.to_json, ex: DELETION_TIMEOUT.to_i)
+
+    results[:embeds].first[:footer][:text] += " | results will self-destruct in #{SOFT_DELETION_TIMEOUT.inspect}"
+
+    response = update_original_message!(results)
+
+    message = Discordrb::Message.new(response.to_h, DISCORD_BOT)
+    message.react CROSS_MARK
+
+    Redis.current.set("message-#{response['id']}-token", @interaction_token, ex: DELETION_TIMEOUT.to_i)
+
+    schedule_auto_delete_workers!
   end
 
   def result_content
@@ -131,7 +143,7 @@ class ResponseWorker
   end
 
   def footer
-    "#{requestor_phrase} | took #{processing_time} to process"
+    "#{requestor_phrase} | processed in #{processing_time}"
   end
 
   def game_embed(game, idx)
@@ -222,6 +234,12 @@ class ResponseWorker
 
   def user_ids
     @user_ids ||= @user_id_mapping.keys
+  end
+
+  def schedule_auto_delete_workers!
+    (1..(SOFT_DELETION_TIMEOUT.to_i / 60)).each do |n|
+      Discord::AutoDeleteWorker.perform_in(n.minutes, @interaction_token)
+    end
   end
 
   def processing_time

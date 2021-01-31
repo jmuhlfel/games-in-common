@@ -4,3 +4,6 @@ Layout/HashAlignment:
 
 Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
