@@ -34,7 +34,7 @@ module Discord
           `/gamesincommon` requests that include you from working until you authorize it again. Access tokens are \
           automatically deleted anyway (generally after a week), but you can move things along if you so choose.
 
-          User privacy is important. Please [read the privacy policy](#{PRIVACY_POLICY_URL}) and \
+          Your privacy is important. Please [read the privacy policy](#{PRIVACY_POLICY_URL}) and \
           [pass along any suggestions for improvements you might have](https://google.com).
         HELP
       }
@@ -51,7 +51,7 @@ module Discord
     with_options if: :primary? do
       validates :user_ids, presence: true
       validates :n, presence: true, inclusion: { in: N_VALUES }
-      valudates :sort, presence: true, inclusion: { in: SORT_VALUES }
+      validates :sort, presence: true, inclusion: { in: SORT_VALUES }
     end
 
     def initialize(params)

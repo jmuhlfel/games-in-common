@@ -13,14 +13,16 @@ module Steam
 
           if data['success']
             data = data['data'] # https://www.youtube.com/watch?v=bl5TUw7sUBs
-            result = data.slice('name', 'header_image', 'metacritic', 'recommendations').deep_symbolize_keys
+            result = data.slice('name', 'header_image', 'metacritic').deep_symbolize_keys
 
             result.merge(
-              id:          game_id,
-              game:        data['type'] == 'game',
-              multiplayer: data['categories'].to_a.any? { |category| category['description'] == 'Multi-player' },
-              available:   !data.dig('release_date', 'coming_soon'),
-              valid:       true
+              id:              game_id,
+              game:            data['type'] == 'game',
+              multiplayer:     data['categories'].to_a.any? { |category| category['description'] == 'Multi-player' },
+              available:       !data.dig('release_date', 'coming_soon'),
+              recommendations: data.dig('recommendations', 'total'),
+              achievements:    data.dig('achievements', 'total'),
+              valid:           true
             )
           else
             { id: game_id, valid: false }
@@ -39,7 +41,7 @@ module Steam
       end
     end
 
-    %i[id name metacritic].each do |sym|
+    %i[id name metacritic recommendations achievements].each do |sym|
       define_method sym do
         @data[sym]
       end

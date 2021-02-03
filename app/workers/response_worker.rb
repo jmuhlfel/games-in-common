@@ -135,7 +135,15 @@ class ResponseWorker
   end
 
   def underachievement_proportion(game)
-    # TBD
+    return 0 if game.achievements.to_i.zero?
+
+    mutually_locked_achievements(game).size / game.achievements.to_f
+  end
+
+  def mutually_locked_achievements(game)
+    @user_id_mapping.values.map do |steam_user_id|
+      Steam::UserAchievements.fetch(steam_user_id, game.id).locked_achievement_names
+    end.reduce(:&)
   end
 
   def summary_embed
@@ -234,7 +242,8 @@ class ResponseWorker
   end
 
   def common_game_fields(game)
-    underachievement_value = "#{(underachievement_proportion(game) * 100).to_i}%"
+    underachievement_value = "#{(underachievement_proportion(game) * 100).to_i}% "\
+                             "(#{mutually_locked_achievements(game).size}/#{game.achievements || 0})"
 
     [{ name: 'Underachievement', value: underachievement_value, inline: true },
      { name: 'Metascore', value: game.metascore_field_value }]
