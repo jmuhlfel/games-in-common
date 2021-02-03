@@ -112,17 +112,30 @@ class ResponseWorker
   end
 
   def final_games
-    @final_games ||= matching_games.values.sort_by { |game| -total_game_score(game) }.first(NUM_RESULTS)
+    @final_games ||= matching_games.values.sort_by { |game| -total_game_score(game) }.first(interaction_data[:n])
   end
 
   def total_game_score(game)
-    user_ids.sum { |user_id| game_score(user_id, game.id) }
+    case interaction_data[:sort]
+    when 'mostplaytime'
+      user_ids.sum { |user_id| playtime_score(user_id, game.id) }
+    when 'leastplaytime'
+      user_ids.sum { |user_id| -playtime_score(user_id, game.id) }
+    when 'underachievement'
+      underachievement_proportion(game)
+    when 'metascore'
+      game.metascore
+    end
   end
 
-  def game_score(user_id, game_id)
+  def playtime_score(user_id, game_id)
     stats = user_stats(user_id, game_id)
 
     stats[:total] + stats[:recent] * RECENCY_MULTIPLIER
+  end
+
+  def underachievement_proportion(game)
+    # TBD
   end
 
   def summary_embed
@@ -150,11 +163,9 @@ class ResponseWorker
     fields = if user_ids.one?
       total, recent = user_stats(user_ids.first, game.id).values
 
-      [
-        { name: 'Total playtime', value: pretty_playtime(total), inline: true },
-        { name: 'Recent playtime', value: pretty_playtime(recent), inline: true },
-        game.metascore_field
-      ].compact
+      [{ name: 'Total playtime', value: pretty_playtime(total), inline: true },
+       { name: 'Recent playtime', value: pretty_playtime(recent), inline: true },
+       *common_game_fields(game)]
     else
       multi_user_game_fields(game)
     end
@@ -211,17 +222,22 @@ class ResponseWorker
 
   def multi_user_game_fields(game)
     total_playtime = pretty_playtime(libraries.sum { |library| library.stats(game.id)[:total] })
-    score_groups = user_ids.group_by { |user_id| game_score(user_id, game.id) }
+    score_groups = user_ids.group_by { |user_id| playtime_score(user_id, game.id) }
     min_user_playtimes, max_user_playtimes = score_groups.minmax.map do |grouping|
       grouping.last.map { |user_id| user_playtime_phrase(user_id, game.id) }.to_sentence
     end
 
-    [
-      { name: 'Total playtime', value: total_playtime, inline: true },
-      { name: 'Most playtime', value: max_user_playtimes, inline: true },
-      { name: 'Least playtime', value: min_user_playtimes, inline: true },
-      game.metascore_field
-    ].compact
+    [{ name: 'Total playtime', value: total_playtime, inline: true },
+     { name: 'Most playtime', value: max_user_playtimes, inline: true },
+     { name: 'Least playtime', value: min_user_playtimes, inline: true },
+     *common_game_fields(game)]
+  end
+
+  def common_game_fields(game)
+    underachievement_value = "#{(underachievement_proportion(game) * 100).to_i}%"
+
+    [{ name: 'Underachievement', value: underachievement_value, inline: true },
+     { name: 'Metascore', value: game.metascore_field_value }]
   end
 
   def user_playtime_phrase(user_id, game_id)

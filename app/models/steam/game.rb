@@ -53,8 +53,12 @@ module Steam
       valid? && game? && multiplayer? && available?
     end
 
-    def metascore_field
-      { name: 'Metascore', value: "[#{metacritic[:score]}](#{metacritic[:url]})", inline: true } if metacritic
+    def metascore
+      (metacritic || {})[:score].to_i
+    end
+
+    def metascore_field_value
+      metacritic.present? ? "[#{metacritic[:score]}](#{metacritic[:url]})" : 'none'
     end
 
     def thumb_url
