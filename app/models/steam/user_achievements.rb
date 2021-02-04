@@ -15,11 +15,9 @@ module Steam
           response = HTTParty.get(ACHIEVEMENTS_API_URL, query: data)
 
           unless response.ok?
-            if response.dig('playerstats', 'error') == 'Requested app has no stats'
-              next {}
-            else
-              raise Exceptions::SteamError, response.inspect
-            end
+            next {} if response.dig('playerstats', 'error') == 'Requested app has no stats'
+
+            raise Exceptions::SteamError, response.inspect
           end
 
           Array(response.dig('playerstats', 'achievements'))
@@ -37,8 +35,8 @@ module Steam
       @data = data
     end
 
-    def locked_achievement_names
-      @locked_achievement_names ||= @data.select { |_name, time| time.to_i.zero? }.keys
+    def unlocked_achievement_names
+      @unlocked_achievement_names ||= @data.select { |_name, time| time.to_i.positive? }.keys
     end
   end
 end

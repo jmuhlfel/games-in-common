@@ -25,5 +25,5 @@ end
 DISCORD_BOT.run(true) # async
 
 at_exit do
-  DISCORD_BOT.join
+  DISCORD_BOT.stop
 end

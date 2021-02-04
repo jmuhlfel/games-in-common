@@ -2,6 +2,7 @@
 
 class InteractionsController < ApplicationController
   PING_JSON = { type: 1 }.to_json.freeze
+  VERIFICATION_KEY = Ed25519::VerifyKey.new([ENV['DISCORD_APP_PUBLIC_KEY']].pack('H*')).freeze
 
   before_action :verify_request
 
@@ -32,9 +33,7 @@ class InteractionsController < ApplicationController
 
     return head(:unauthorized) unless signature && timestamp
 
-    verify_key = Ed25519::VerifyKey.new([ENV['DISCORD_APP_PUBLIC_KEY']].pack('H*'))
-
-    verify_key.verify([signature].pack('H*'), timestamp + request.body.read.to_s)
+    VERIFICATION_KEY.verify([signature].pack('H*'), timestamp + request.body.read.to_s)
   rescue Ed25519::VerifyError
     head :unauthorized
   end

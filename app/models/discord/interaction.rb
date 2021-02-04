@@ -20,13 +20,15 @@ module Discord
           `/gamesincommon` is a bot command that uses the Discord and Steam APIs to find all the multiplayer games \
           that you and your buddies (or any group of Discord users, really) own, and suggests a few based on \
           playtime, metascore, or achievement completion. Options:
-            `n`: sets the number of top games to return (1 to 10)
+            `n`: sets the number of top games to return (1 to 9)
             `sort`: sets the metric that the bot uses to rank each game
-              `mostplaytime` (default): show games that the group has the most time played in, weighing recent playtime more heavily
-              `leastplaytime`: opposite of the above. Maybe useful for drinking games? Idk I'm not your camp counselor
-              `underachievement`: show games that have the highest proportion of achievements that the entire group doesn't have
-              `metascore`: show games that have the highest metascores (games without metascores default to 0)
-              ~~`godgamer`~~: The world isn't ready.
+              `Most playtime` (default): show games that the group has the most time played in, weighing recent playtime more heavily
+              `Least playtime`: opposite of the above, for when you feel like playing something "new"
+              `Most shared achievements`: show games that have the highest proportion of shared unlocked achievements
+              `Fewest shared achievments`: opposite of the above, useful for group achievement hunting
+              `Highest metascore`: show games that have the highest metascores (games without metascores default to 0)
+              `Lowest metascore`: opposite of the above. Maybe useful for drinking games? Idk I'm not your camp counselor
+              ~~`God-gamer`~~: The world isn't ready.
 
           `/gamesincommonhelp` shows this help message (just for you!).
 
@@ -41,7 +43,14 @@ module Discord
     }.freeze
     COMMANDS = %w[gamesincommon gamesincommonhelp gamesincommonrevoke].freeze
     N_VALUES = (1..9).to_a.freeze
-    SORT_VALUES = %w[mostplaytime leastplaytime underachievement metascore].freeze
+    SORT_VALUES = %w[
+      mostplaytime
+      leastplaytime
+      mostsharedachievements
+      fewestsharedachievements
+      highestmetascore
+      lowestmetascore
+    ].freeze
 
     attr_reader :params, :token
 
@@ -77,7 +86,7 @@ module Discord
     end
 
     def command
-      @command ||= @params.dig('data', 'name')
+      @command ||= @params.dig(:data, :name)
     end
 
     def primary?
@@ -145,8 +154,8 @@ module Discord
 
     def option_values
       options.select do |option|
-        yield option['name']
-      end.map { |option| option['value'] }
+        yield option[:name]
+      end.map { |option| option[:value] }
     end
   end
 end

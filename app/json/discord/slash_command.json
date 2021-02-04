@@ -2,7 +2,8 @@
     "name": "gamesincommon",
     "description": "Find games to play together based on Steam playtime, ratings etc. (/gamesincommonhelp for more info)",
     "options": [
-        {   "name": "n",
+        {   
+            "name": "n",
             "description": "Number of results to show",
             "type": 4,
             "required": true,
@@ -60,12 +61,20 @@
                     "value": "leastplaytime"
                 },
                 {
-                    "name": "Underachievement",
-                    "value": "underachievement"
+                    "name": "Most shared achievements",
+                    "value": "mostsharedachievements"
                 },
                 {
-                    "name": "Metascore",
-                    "value": "metascore"
+                    "name": "Fewest shared achievements",
+                    "value": "fewestsharedachievements"
+                },
+                {
+                    "name": "Highest metascore",
+                    "value": "highestmetascore"
+                },
+                {
+                    "name": "Lowest metascore",
+                    "value": "lowestmetascore"
                 }
             ]
         },

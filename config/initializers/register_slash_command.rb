@@ -2,4 +2,6 @@
 
 # make sure Discord has the latest configuration for our slash command
 
-Discord::SlashCommands.register!
+Rails.application.reloader.to_prepare do
+  Discord::SlashCommands.register!
+end

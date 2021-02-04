@@ -2,8 +2,9 @@
 
 class InviteController < ApplicationController
   DISCORD_INVITE_AUTH_QUERY = {
-    client_id: ENV['DISCORD_APP_ID'],
-    scope:     'applications.commands'
+    client_id:   ENV['DISCORD_APP_ID'],
+    permissions: 65_600, # read message history & add reactions
+    scope:       'bot applications.commands'
   }.to_query.freeze
 
   uri = URI(DISCORD_AUTH_URL_BASE)

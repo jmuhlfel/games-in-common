@@ -112,20 +112,28 @@ class ResponseWorker
   end
 
   def final_games
-    @final_games ||= matching_games.values.sort_by { |game| -total_game_score(game) }.first(interaction_data[:n])
+    @final_games ||= matching_games.values.sort_by { |game| total_game_score(game) }.first(interaction_data[:n])
   end
 
   def total_game_score(game)
     case interaction_data[:sort]
     when 'mostplaytime'
-      user_ids.sum { |user_id| playtime_score(user_id, game.id) }
+      -total_playtime_score(game)
     when 'leastplaytime'
-      user_ids.sum { |user_id| -playtime_score(user_id, game.id) }
-    when 'underachievement'
-      underachievement_proportion(game)
-    when 'metascore'
-      game.metascore
+      total_playtime_score(game)
+    when 'mostsharedachievements'
+      [-shared_achievement_proportion(game), -total_playtime_score(game)]
+    when 'fewestsharedachievements'
+      [shared_achievement_proportion(game), -total_playtime_score(game)]
+    when 'highestmetascore'
+      [-game.metascore, -total_playtime_score(game)]
+    when 'lowestmetascore'
+      [game.metascore, -total_playtime_score(game)]
     end
+  end
+
+  def total_playtime_score(game)
+    user_ids.sum { |user_id| playtime_score(user_id, game.id) }
   end
 
   def playtime_score(user_id, game_id)
@@ -134,15 +142,15 @@ class ResponseWorker
     stats[:total] + stats[:recent] * RECENCY_MULTIPLIER
   end
 
-  def underachievement_proportion(game)
+  def shared_achievement_proportion(game)
     return 0 if game.achievements.to_i.zero?
 
-    mutually_locked_achievements(game).size / game.achievements.to_f
+    mutually_unlocked_achievements(game).size / game.achievements.to_f
   end
 
-  def mutually_locked_achievements(game)
+  def mutually_unlocked_achievements(game)
     @user_id_mapping.values.map do |steam_user_id|
-      Steam::UserAchievements.fetch(steam_user_id, game.id).locked_achievement_names
+      Steam::UserAchievements.fetch(steam_user_id, game.id).unlocked_achievement_names
     end.reduce(:&)
   end
 
@@ -173,7 +181,8 @@ class ResponseWorker
 
       [{ name: 'Total playtime', value: pretty_playtime(total), inline: true },
        { name: 'Recent playtime', value: pretty_playtime(recent), inline: true },
-       *common_game_fields(game)]
+       { name: 'Achievements', value: achievements_value(game), inline: true },
+       { name: 'Metascore', value: game.metascore_field_value, inline: true }]
     else
       multi_user_game_fields(game)
     end
@@ -238,15 +247,15 @@ class ResponseWorker
     [{ name: 'Total playtime', value: total_playtime, inline: true },
      { name: 'Most playtime', value: max_user_playtimes, inline: true },
      { name: 'Least playtime', value: min_user_playtimes, inline: true },
-     *common_game_fields(game)]
+     { name: 'Shared achievements', value: achievements_value(game), inline: true },
+     { name: 'Metascore', value: game.metascore_field_value, inline: true }]
   end
 
-  def common_game_fields(game)
-    underachievement_value = "#{(underachievement_proportion(game) * 100).to_i}% "\
-                             "(#{mutually_locked_achievements(game).size}/#{game.achievements || 0})"
+  def achievements_value(game)
+    return 'N/A' if game.achievements.to_i.zero?
 
-    [{ name: 'Underachievement', value: underachievement_value, inline: true },
-     { name: 'Metascore', value: game.metascore_field_value }]
+    "#{(shared_achievement_proportion(game) * 100).to_i}% "\
+    "(#{mutually_unlocked_achievements(game).size}/#{game.achievements})"
   end
 
   def user_playtime_phrase(user_id, game_id)
