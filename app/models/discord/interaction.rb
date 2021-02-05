@@ -6,9 +6,9 @@ module Discord
     include Discord::Mixins::UserMentionable
 
     SNARK = [
-      'finish my 120star run',
       'do my taxes',
-      'eat a PB&J',
+      'grab a snack',
+      'finish my 120star run',
       'laugh at @MOONMOON for dying again'
     ].freeze
     HELP_RESPONSE = {
@@ -25,9 +25,9 @@ module Discord
               `Most playtime` (default): show games that the group has the most time played in, weighing recent playtime more heavily
               `Least playtime`: opposite of the above, for when you feel like playing something "new"
               `Most shared achievements`: show games that have the highest proportion of shared unlocked achievements
-              `Fewest shared achievments`: opposite of the above, useful for group achievement hunting
+              `Fewest shared achievments`: opposite of the above, useful for group achievement hunting (games without achievements will be filtered out)
               `Highest metascore`: show games that have the highest metascores (games without metascores default to 0)
-              `Lowest metascore`: opposite of the above. Maybe useful for drinking games? Idk I'm not your camp counselor
+              `Lowest metascore`: opposite of the above. Maybe useful for drinking games? (games without metascores will be filtered out)
               ~~`God-gamer`~~: The world isn't ready.
 
           `/gamesincommonhelp` shows this help message (just for you!).

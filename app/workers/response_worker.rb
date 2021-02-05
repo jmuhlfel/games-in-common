@@ -63,6 +63,10 @@ class ResponseWorker
       game = Steam::Game.fetch(game_id)
       next unless game.usable?
 
+      next if interaction_data[:sort] == 'fewestsharedachievements' && game.achievements.to_i.zero?
+
+      next if interaction_data[:sort] == 'lowestmetascore' && game.metacritic.blank?
+
       games[game_id] = game
       next if Time.now < next_game_status_update
 
@@ -87,12 +91,18 @@ class ResponseWorker
 
     response = update_original_message!(results)
 
-    message = Discordrb::Message.new(response.to_h, DISCORD_BOT)
-    message.react CROSS_MARK
+    add_delete_reaction!(response)
 
     Redis.current.set("message-#{response['id']}-token", @interaction_token, ex: DELETION_TIMEOUT.to_i)
 
     schedule_auto_delete_workers!
+  end
+
+  def add_delete_reaction!(response)
+    message = Discordrb::Message.new(response.to_h, DISCORD_BOT)
+    message.react CROSS_MARK
+  rescue Discordrb::Errors::NoPermission
+    # probably invoked from a private channel that the bot can't see/react in - noop
   end
 
   def result_content
