@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InteractionsController < ApplicationController
+class InteractionsController < ActionController::API
   PING_JSON = { type: 1 }.to_json.freeze
   VERIFICATION_KEY = Ed25519::VerifyKey.new([ENV['DISCORD_APP_PUBLIC_KEY']].pack('H*')).freeze
 

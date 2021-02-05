@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AuthorizationController < ActionController::Base
+class AuthorizationController < ApplicationController
   DISCORD_AUTH_DATA = {
     client_id:     ENV['DISCORD_APP_ID'],
     response_type: 'code',
@@ -16,7 +16,7 @@ class AuthorizationController < ActionController::Base
       render status: :unauthorized
     else
       # fresh auth request - send 'em to Discord
-      redirect_to_discord_auth!
+      # redirect_to_discord_auth!
     end
   end
 

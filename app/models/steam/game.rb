@@ -12,6 +12,8 @@ module Steam
           raise Exceptions::SteamError, response.inspect unless response.ok?
 
           if data['success']
+            Redis.current.sadd('steam-game-ids', game_id)
+
             data = data['data'] # https://www.youtube.com/watch?v=bl5TUw7sUBs
             result = data.slice('name', 'header_image', 'metacritic').deep_symbolize_keys
 
@@ -29,7 +31,9 @@ module Steam
           end
         end
 
-        new(data)
+        new(data).tap do |game|
+          Redis.current.sadd('multiplayer-steam-game-ids', game.id) if game.usable?
+        end
       end
     end
 

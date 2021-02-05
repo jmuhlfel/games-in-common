@@ -1,0 +1,18 @@
+/*
+ *= require_self
+ */
+
+@import "authorization";
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: black;
+}
+
+.hidden {
+  display: none;
+}

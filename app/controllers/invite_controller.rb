@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class InviteController < ApplicationController
+class InviteController < ActionController::API
   DISCORD_INVITE_AUTH_QUERY = {
     client_id:   ENV['DISCORD_APP_ID'],
     permissions: 65_600, # read message history & add reactions

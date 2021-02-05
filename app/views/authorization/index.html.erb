@@ -1,10 +1,26 @@
-<% if response.unauthorized? %>
-  <% if @denied %>
-    <h2>Authorization cancelled!</h2>
-    <h4>Aw, 'cmon! You can trust me, I swear! I wrote a <%= link_to('privacy policy', PRIVACY_POLICY_URL) %> and everything!</h4>
-  <% else %>
-    <h2>Authorization failed.</h2>
-  <% end %>
-<% else %>
-  <h1>Authorized!</h1>
-<% end %>
+<div class="authorization">
+  <div class="content">
+    <% if response.ok? %>
+      <div class="success">
+        <h1 class="success-text">Authorized!</h1>
+        <h4>You can close this tab now. Check Discord for your results!</h4>
+      </div>
+    <% elsif @denied %>
+      <h1 class="failure-text">Authorization cancelled!</h1>
+      <h4>Aw, 'cmon! You can trust me, I swear! I wrote a <%= link_to('privacy policy', PRIVACY_POLICY_URL) %> and everything!</h4>
+    <% end %>
+    <div class="failure <%= 'hidden' if response.ok? || @denied %>">
+      <h1 class="failure-text">Authorization failed.</h1>
+    </div>
+  </div>
+
+  <div class="steam-game-bg">
+    <% steam_game_thumb_url_groups.each do |thumb_url_group| %>
+      <div class="game-thumb-group">
+        <% thumb_url_group.each do |thumb_url| %>
+          <img src="<%= thumb_url %>" onload="gameImgFadeIn(this)">
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

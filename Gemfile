@@ -25,8 +25,10 @@ gem 'ed25519' # signature verification
 gem 'hiredis'
 gem 'httparty'
 gem 'redis', require: ['redis', 'redis/connection/hiredis']
+gem 'sass-rails'
 gem 'sidekiq'
 gem 'sidekiq-unique-jobs'
+gem 'uglifier'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
