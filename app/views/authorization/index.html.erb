@@ -1,7 +1,10 @@
 <div class="authorization">
   <div class="content">
     <% if response.ok? %>
-      <div class="success">
+      <div class="pending">
+        <h1>Authorizing...</h1>
+      </div>
+      <div class="success hidden">
         <h1 class="success-text">Authorized!</h1>
         <h4>You can close this tab now. Check Discord for your results!</h4>
       </div>
@@ -9,6 +12,7 @@
       <h1 class="failure-text">Authorization cancelled!</h1>
       <h4>Aw, 'cmon! You can trust me, I swear! I wrote a <%= link_to('privacy policy', PRIVACY_POLICY_URL) %> and everything!</h4>
     <% end %>
+
     <div class="failure <%= 'hidden' if response.ok? || @denied %>">
       <h1 class="failure-text">Authorization failed.</h1>
     </div>

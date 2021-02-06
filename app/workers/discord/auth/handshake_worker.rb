@@ -18,7 +18,9 @@ module Discord
       sidekiq_options retry: false # too slow for our use case
 
       def perform(code)
-        exchange_response = request_token!(code)
+        @code = code
+
+        exchange_response = request_token!(@code)
         token = exchange_response['access_token']
         raise Exceptions::DiscordError, exchange_response.inspect if token.blank?
 
@@ -29,6 +31,12 @@ module Discord
         Rails.cache.write(user_token_cache_key(@discord_user_id), token, expires_in: exchange_response['expires_in'])
 
         rerun_matching_auth_checks!
+
+        update_client!(true)
+      rescue StandardError
+        update_client!(false)
+
+        raise
       end
 
       private
@@ -41,6 +49,18 @@ module Discord
 
       def request_discord_user!(token)
         HTTParty.get(USER_URL, headers: user_headers(token))
+      end
+
+      # have to try a few times because sidekiq is too fast and the subscription might not exist yet
+      def update_client!(success)
+        5.times do
+          push_count = ActionCable.server.broadcast("auth_#{@code}", { success: success })
+          return true if push_count.positive?
+
+          sleep 0.5
+        end
+
+        false
       end
 
       def discord_user_ids

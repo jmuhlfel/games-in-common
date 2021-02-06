@@ -16,26 +16,32 @@ class AuthorizationController < ApplicationController
       render status: :unauthorized
     else
       # fresh auth request - send 'em to Discord
-      # redirect_to_discord_auth!
+      redirect_to_discord_auth!
     end
   end
 
   private
 
   def check_state_and_handshake!
-    if Rails.cache.read("oauth-state-#{params[:state]}")
+    if params[:state].present? && cookies[:user_auth_state] == params[:state]
       Discord::Auth::HandshakeWorker.perform_async(params[:code])
     else
       render status: :unauthorized
     end
   end
 
-  # I'm pretty sure a 4 year old with privileged access could figure
-  # out how to break this "stateful" handshake. TODO.
   def redirect_to_discord_auth!
     state = SecureRandom.hex
 
-    Rails.cache.write("oauth-state-#{state}", true, expires_in: EXPIRATION_TIMEOUT)
+    response.set_cookie(
+      :user_auth_state,
+      {
+        value:    state,
+        expires:  5.minutes.from_now,
+        secure:   Rails.env.production?,
+        httponly: Rails.env.production?
+      }
+    )
 
     uri = URI(DISCORD_AUTH_URL_BASE)
     uri.query = DISCORD_AUTH_DATA.merge(redirect_uri: authorization_url, state: state).to_query
