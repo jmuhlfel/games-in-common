@@ -3,6 +3,7 @@
 module Discord
   class Interaction
     include ActiveModel::Validations
+    include Discord::Mixins::UserAuth
     include Discord::Mixins::UserMentionable
 
     SNARK = [
@@ -41,6 +42,8 @@ module Discord
         HELP
       }
     }.freeze
+    TOKEN_DELETED_RESPONSE = 'Your `/gamesincommon` user access token has been deleted. The bot will be unable to see your library until you authorize again.'
+    NO_TOKEN_RESPONSE = "You don't currently have a `/gamesincommon` user access token! The bot will be unable to see your library until you authorize."
     COMMANDS = %w[gamesincommon gamesincommonhelp gamesincommonrevoke].freeze
     N_VALUES = (1..9).to_a.freeze
     SORT_VALUES = %w[
@@ -72,6 +75,8 @@ module Discord
       case command
       when 'gamesincommon'
         schedule_workers!
+      when 'gamesincommonrevoke'
+        @revoked = Rails.cache.delete(user_token_cache_key(calling_user[:id]))
       end
     end
 
@@ -127,6 +132,8 @@ module Discord
         main_response
       when 'gamesincommonhelp'
         HELP_RESPONSE
+      when 'gamesincommonrevoke'
+        revoke_response
       else
         raise ArgumentError
       end
@@ -142,6 +149,17 @@ module Discord
             description: "Please wait while I ~~#{SNARK.sample}~~ check for authorization from #{mention_phrase}.",
             color:       DISCORD_COLORS[:info_blue]
           }]
+        }
+      }
+    end
+
+    def revoke_response
+      {
+        type: 3,
+        data: {
+          tts:     false,
+          flags:   64, # ephemeral
+          content: @revoked ? TOKEN_DELETED_RESPONSE : NO_TOKEN_RESPONSE
         }
       }
     end

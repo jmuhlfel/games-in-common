@@ -1,0 +1,4 @@
+{
+    "name": "gamesincommonrevoke",
+    "description": "Delete your user access token, preventing the bot from accessing your library until you reauthorize"
+}

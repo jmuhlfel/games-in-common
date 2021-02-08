@@ -1,6 +1,6 @@
 # `/gamesincommon` for Discord
 
-A bot to help Discord users figure out what Steam games they can play together based on playtime, achievements, and ratings
+A bot to help Discord users figure out what Steam games they can play together based on playtime, completed achievements, or ratings
 
 ## Usage
 ### Server owners - [click to install the bot!](https://games-in-common.herokuapp.com/invite)
