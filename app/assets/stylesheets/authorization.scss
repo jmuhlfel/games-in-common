@@ -1,16 +1,14 @@
 @import "variables";
 
-$bg-group-width: 5584px;
-
 @keyframes bgScrollLeft {
   100% {
-    transform: translateX(-$bg-group-width);
+    transform: translateX(-66.66667%);
   }
 }
 
 @keyframes bgScrollRight {
   100% {
-    transform: translateX($bg-group-width);
+    transform: translateX(66.66667%);
   }
 }
 
@@ -22,7 +20,7 @@ $bg-group-width: 5584px;
     margin: 0 auto;
     left: 0;
     right: 0;
-    top: 280px;
+    top: 37vh;
     text-align: center;
     text-shadow: 0px 0px 5px $bg-color;
     color: white;
@@ -68,6 +66,7 @@ $bg-group-width: 5584px;
       position: absolute;
       white-space: nowrap;
       transform: translate3d(0, 0, 0);
+      will-change: transform;
 
       &:nth-child(even) {
         right: 0;
@@ -80,65 +79,34 @@ $bg-group-width: 5584px;
       }
 
       &:nth-child(1) {
-        top: 40px;
+        top: 4vh;
       }
 
       &:nth-child(2) {
-        top: 190px;
+        top: 23vh;
       }
 
       &:nth-child(3) {
-        top: 340px;
+        top: 42vh;
       }
 
       &:nth-child(4) {
-        top: 490px;
+        top: 61vh;
       }
 
       &:nth-child(5) {
-        top: 640px;
+        top: 80vh;
       }
     }
 
     img {
       position: relative;
-      width: 226px;
+      width: 30vh;
       margin-right: 50px;
       object-fit: contain;
       opacity: 0;
       transition: opacity 1s;
       box-shadow: 0px 0px 20px 5px #24364c;
-    }
-  }
-}
-
-@media (max-width: 980px) {
-  .authorization {
-    .steam-game-bg {
-      .game-thumb-group {
-        &:nth-child(1) {
-          top: 60px;
-        }
-
-        &:nth-child(2) {
-          top: 325px;
-        }
-
-        &:nth-child(3) {
-          top: 590px;
-        }
-
-        &:nth-child(4) {
-          top: 855px;
-        }
-
-        &:nth-child(5) {
-          top: 1120px;
-        }
-      }
-      img {
-        width: 452px;
-      }
     }
   }
 }
