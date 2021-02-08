@@ -17,7 +17,8 @@ DISCORD_COLORS = {
   sadge_grey:  10_197_915
 }.freeze
 
-PRIVACY_POLICY_URL = 'https://lolyoudidntreallythinkiwasseriousdidyou.com'
+PRIVACY_POLICY_URL = 'https://github.com/jmuhlfel/games-in-common#privacy--use-of-data'
+REPORTS_URL = 'https://github.com/jmuhlfel/games-in-common/issues/new'
 
 EXPIRATION_TIMEOUT = 5.minutes
 SOFT_DELETION_TIMEOUT = 10.minutes

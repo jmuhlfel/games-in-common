@@ -29,6 +29,7 @@ module Discord
         raise Exceptions::DiscordError, user_response.inspect if @discord_user_id.blank?
 
         Rails.cache.write(user_token_cache_key(@discord_user_id), token, expires_in: exchange_response['expires_in'])
+        Rails.cache.write("user-code-#{@code}", true, expires_in: 1.hour)
 
         rerun_matching_auth_checks!
 

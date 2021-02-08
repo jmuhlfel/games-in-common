@@ -23,25 +23,21 @@ class AuthorizationController < ApplicationController
   private
 
   def check_state_and_handshake!
-    if params[:state].present? && cookies[:user_auth_state] == params[:state]
-      Discord::Auth::HandshakeWorker.perform_async(params[:code])
-    else
-      render status: :unauthorized
-    end
+    return render(status: :unauthorized) unless params[:state].present? && cookies[:user_auth_state] == params[:state]
+    return render(status: :bad_request) if Rails.cache.read("user-code-#{params[:code]}")
+
+    Discord::Auth::HandshakeWorker.perform_async(params[:code])
   end
 
   def redirect_to_discord_auth!
     state = SecureRandom.hex
 
-    response.set_cookie(
-      :user_auth_state,
-      {
-        value:    state,
-        expires:  5.minutes.from_now,
-        secure:   Rails.env.production?,
-        httponly: Rails.env.production?
-      }
-    )
+    response.set_cookie(:user_auth_state, {
+      value:    state,
+      expires:  5.minutes.from_now,
+      secure:   Rails.env.production?,
+      httponly: Rails.env.production?
+    })
 
     uri = URI(DISCORD_AUTH_URL_BASE)
     uri.query = DISCORD_AUTH_DATA.merge(redirect_uri: authorization_url, state: state).to_query

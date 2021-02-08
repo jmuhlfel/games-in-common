@@ -1,20 +1,21 @@
-$bg-group-width: 5520px;
+@import "variables";
+
+$bg-group-width: 5584px;
 
 @keyframes bgScrollLeft {
   100% {
-    transform: translateX(-$bg-group-width - 80px);
+    transform: translateX(-$bg-group-width);
   }
 }
 
 @keyframes bgScrollRight {
   100% {
-    transform: translateX($bg-group-width + 80px);
+    transform: translateX($bg-group-width);
   }
 }
 
 .authorization {
   .content {
-    font-family: 'Source Sans Pro', sans-serif;
     z-index: 5;
     position: absolute;
     width: 800px;
@@ -23,7 +24,7 @@ $bg-group-width: 5520px;
     right: 0;
     top: 280px;
     text-align: center;
-    text-shadow: 0px 0px 5px black;
+    text-shadow: 0px 0px 5px $bg-color;
     color: white;
 
     h1 {
@@ -44,7 +45,19 @@ $bg-group-width: 5520px;
     }
   }
 
+  .footer {
+    z-index: 6;
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: #999999;
+  }
+
   .steam-game-bg {
+    z-index: 1;
     position: absolute;
     top: 0;
     left: 0;

@@ -2,6 +2,7 @@
  *= require_self
  */
 
+@import "variables";
 @import "authorization";
 
 html, body {
@@ -10,7 +11,8 @@ html, body {
 
 body {
   margin: 0;
-  background: black;
+  background: $bg-color;
+  font-family: 'Source Sans Pro', sans-serif;
 }
 
 .hidden {

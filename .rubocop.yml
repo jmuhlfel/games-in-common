@@ -7,3 +7,6 @@ Layout/EndAlignment:
 
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented_relative_to_receiver
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent

@@ -193,15 +193,13 @@ module Discord
       end
 
       def request_presence_check!
-        DISCORD_BOT.gateway.send_packet(
-          8, { # request member chunks op
-            guild_id:  interaction_data[:guild_id],
-            query:     '',
-            limit:     0,
-            presences: true,
-            user_ids:  interaction_data[:user_ids]
-          }
-        )
+        DISCORD_BOT.gateway.send_packet(8, { # request member chunks op
+          guild_id:  interaction_data[:guild_id],
+          query:     '',
+          limit:     0,
+          presences: true,
+          user_ids:  interaction_data[:user_ids]
+        })
         Redis.current.set("requested-presence-interaction-#{@interaction_token}", true, ex: EXPIRATION_TIMEOUT.to_i)
       end
 
