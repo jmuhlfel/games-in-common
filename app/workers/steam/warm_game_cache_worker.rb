@@ -15,8 +15,6 @@ module Steam
       steam_ids.each do |steam_id|
         Steam::Game.fetch(steam_id.to_i)
       end
-
-      self.class.perform_in(1.hour)
     end
   end
 end
