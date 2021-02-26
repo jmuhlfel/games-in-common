@@ -5,6 +5,8 @@ Rails.application.routes.draw do
 
   mount ActionCable.server => '/cable'
 
+  root 'home#index'
+
   get 'invite', to: 'invite#index', as: :invite
 
   get 'authorize', to: 'authorization#index', as: :authorization
