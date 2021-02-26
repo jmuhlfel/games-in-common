@@ -70,12 +70,12 @@
 
       &:nth-child(even) {
         right: 0;
-        animation: bgScrollRight 120s linear infinite;
+        animation: bgScrollRight 180s linear infinite;
       }
 
       &:nth-child(odd) {
         left: 0;
-        animation: bgScrollLeft 120s linear infinite;
+        animation: bgScrollLeft 180s linear infinite;
       }
 
       &:nth-child(1) {

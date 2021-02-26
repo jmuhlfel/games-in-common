@@ -6,6 +6,8 @@ module Steam
 
     POPULAR_GAMES_URL = 'https://steamspy.com/api.php?request=top100in2weeks'
 
+    sidekiq_options retry: false
+
     def perform
       response = HTTParty.get(POPULAR_GAMES_URL)
       raise response.inspect unless response.ok?
