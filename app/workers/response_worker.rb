@@ -63,9 +63,9 @@ class ResponseWorker
       game = Steam::Game.fetch(game_id)
       next unless game.usable?
 
-      next if interaction_data[:sort] == 'fewestsharedachievements' && game.achievements.to_i.zero?
+      next if interaction_data[:sort] == 'fewest-shared-achievements' && game.achievements.to_i.zero?
 
-      next if interaction_data[:sort] == 'lowestmetascore' && game.metacritic.blank?
+      next if interaction_data[:sort] == 'lowest-metascore' && game.metacritic.blank?
 
       games[game_id] = game
       next if Time.now < next_game_status_update
@@ -127,17 +127,17 @@ class ResponseWorker
 
   def total_game_score(game)
     case interaction_data[:sort]
-    when 'mostplaytime'
+    when 'most-playtime'
       -total_playtime_score(game)
-    when 'leastplaytime'
+    when 'least-playtime'
       total_playtime_score(game)
-    when 'mostsharedachievements'
+    when 'most-shared-achievements'
       [-shared_achievement_proportion(game), -total_playtime_score(game)]
-    when 'fewestsharedachievements'
+    when 'fewest-shared-achievements'
       [shared_achievement_proportion(game), -total_playtime_score(game)]
-    when 'highestmetascore'
+    when 'highest-metascore'
       [-game.metascore, -total_playtime_score(game)]
-    when 'lowestmetascore'
+    when 'lowest-metascore'
       [game.metascore, -total_playtime_score(game)]
     end
   end
@@ -171,11 +171,12 @@ class ResponseWorker
     else
       "the top #{result_count} for #{mention_phrase(user_ids)}"
     end
+    sort_name = interaction_data[:sort].tr('-', ' ')
     matching = 'matching ' if user_ids.many?
     matching_games_phrase = "#{matching_games.size} #{matching}multiplayer #{'game'.pluralize matching_games.size}"
 
     {
-      description: "Here's #{user_phrase} by playtime (of #{matching_games_phrase}):",
+      description: "Here's #{user_phrase} by #{sort_name} (of #{matching_games_phrase}):",
       color:       DISCORD_COLORS[:yay_green],
       footer:      { text: footer }
     }

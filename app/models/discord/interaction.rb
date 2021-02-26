@@ -47,12 +47,12 @@ module Discord
     COMMANDS = %w[gamesincommon gamesincommonhelp gamesincommonrevoke].freeze
     N_VALUES = (1..9).to_a.freeze
     SORT_VALUES = %w[
-      mostplaytime
-      leastplaytime
-      mostsharedachievements
-      fewestsharedachievements
-      highestmetascore
-      lowestmetascore
+      most-playtime
+      least-playtime
+      most-shared-achievements
+      fewest-shared-achievements
+      highest-metascore
+      lowest-metascore
     ].freeze
 
     attr_reader :params, :token

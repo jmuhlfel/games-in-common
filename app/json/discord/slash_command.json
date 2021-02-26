@@ -54,27 +54,27 @@
             "choices": [
                 {
                     "name": "Most playtime",
-                    "value": "mostplaytime"
+                    "value": "most-playtime"
                 },
                 {
                     "name": "Least playtime",
-                    "value": "leastplaytime"
+                    "value": "least-playtime"
                 },
                 {
                     "name": "Most shared achievements",
-                    "value": "mostsharedachievements"
+                    "value": "most-shared-achievements"
                 },
                 {
                     "name": "Fewest shared achievements",
-                    "value": "fewestsharedachievements"
+                    "value": "fewest-shared-achievements"
                 },
                 {
                     "name": "Highest metascore",
-                    "value": "highestmetascore"
+                    "value": "highest-metascore"
                 },
                 {
                     "name": "Lowest metascore",
-                    "value": "lowestmetascore"
+                    "value": "lowest-metascore"
                 }
             ]
         },
