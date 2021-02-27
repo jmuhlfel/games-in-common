@@ -15,7 +15,7 @@ module Steam
             Redis.current.sadd('steam-game-ids', game_id)
 
             data = data['data'] # https://www.youtube.com/watch?v=bl5TUw7sUBs
-            result = data.slice('name', 'header_image', 'metacritic').deep_symbolize_keys
+            result = data.slice('name', 'metacritic').deep_symbolize_keys
 
             result.merge(
               id:              game_id,
@@ -68,7 +68,7 @@ module Steam
     end
 
     def thumb_url
-      self[:header_image]
+      @thumb_url ||= "https://cdn.akamai.steamstatic.com/steam/apps/#{id}/header.jpg"
     end
 
     # Support for protocol links was unfortunately removed from Discord
