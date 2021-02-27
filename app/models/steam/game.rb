@@ -11,24 +11,25 @@ module Steam
           data = response[game_id.to_s]
           raise Exceptions::SteamError, response.inspect unless response.ok?
 
-          if data['success']
-            Redis.current.sadd('steam-game-ids', game_id)
+          invalid = { id: game_id, valid: false }
+          next invalid unless data['success']
 
-            data = data['data'] # https://www.youtube.com/watch?v=bl5TUw7sUBs
-            result = data.slice('name', 'metacritic').deep_symbolize_keys
+          data = data['data'] # https://www.youtube.com/watch?v=bl5TUw7sUBs
+          next invalid unless game_id == data['steam_appid'] # duplicate game listing
 
-            result.merge(
-              id:              game_id,
-              game:            data['type'] == 'game',
-              multiplayer:     data['categories'].to_a.any? { |category| category['description'] == 'Multi-player' },
-              available:       !data.dig('release_date', 'coming_soon'),
-              recommendations: data.dig('recommendations', 'total'),
-              achievements:    data.dig('achievements', 'total'),
-              valid:           true
-            )
-          else
-            { id: game_id, valid: false }
-          end
+          Redis.current.sadd('steam-game-ids', game_id)
+
+          result = data.slice('name', 'metacritic').deep_symbolize_keys
+
+          result.merge(
+            id:              game_id,
+            game:            data['type'] == 'game',
+            multiplayer:     data['categories'].to_a.any? { |category| category['description'] == 'Multi-player' },
+            available:       !data.dig('release_date', 'coming_soon'),
+            recommendations: data.dig('recommendations', 'total'),
+            achievements:    data.dig('achievements', 'total'),
+            valid:           true
+          )
         end
 
         new(data).tap do |game|
