@@ -272,9 +272,9 @@ class ResponseWorker
   def user_playtime_phrase(user_id, game_id)
     stats = user_stats(user_id, game_id)
     total_hours = pretty_playtime(stats[:total])
-    recent_hours = pretty_playtime(stats[:recent], suffix: 'recent')
+    recent_hours = " (#{pretty_playtime(stats[:recent], suffix: 'recent')})" if stats[:total].positive?
 
-    "#{mention(user_id)} with #{total_hours} (#{recent_hours})"
+    "#{mention(user_id)} with #{total_hours}#{recent_hours}"
   end
 
   def user_ids
