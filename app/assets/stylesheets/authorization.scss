@@ -46,11 +46,11 @@
   .footer {
     z-index: 6;
     position: absolute;
-    bottom: 10px;
+    bottom: 3px;
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 12px;
+    font-size: 10px;
     color: #999999;
   }
 
@@ -79,30 +79,30 @@
       }
 
       &:nth-child(1) {
-        top: 4vh;
+        top: 5vh;
       }
 
       &:nth-child(2) {
-        top: 23vh;
+        top: 24vh;
       }
 
       &:nth-child(3) {
-        top: 42vh;
+        top: 43vh;
       }
 
       &:nth-child(4) {
-        top: 61vh;
+        top: 62vh;
       }
 
       &:nth-child(5) {
-        top: 80vh;
+        top: 81vh;
       }
     }
 
     img {
       position: relative;
       width: 30vh;
-      margin-right: 7vh;
+      margin-right: 6vh;
       object-fit: contain;
       opacity: 0;
       transition: opacity 1s;
