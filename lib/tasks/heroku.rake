@@ -9,6 +9,10 @@ namespace :heroku do
       'hobby'
     end
 
-    `heroku ps:type #{dyno_type} -a games-in-common`
+    puts "[heroku:scale_dynos] scaling app dynos to #{dyno_type}"
+
+    result = `heroku ps:type #{dyno_type} -a games-in-common`
+
+    puts "[heroku:scale_dynos] result: #{result}"
   end
 end
