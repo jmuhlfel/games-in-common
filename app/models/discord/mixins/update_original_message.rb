@@ -102,7 +102,7 @@ module Discord
         end
 
         def update_rate_limit!(response)
-          ttl_ms = (response.headers['x-ratelimit-reset-after'].first.to_f * 1000).to_i
+          ttl_ms = (Array(response.headers['x-ratelimit-reset-after']).first.to_f * 1000).to_i
           return unless ttl_ms.positive?
 
           remaining = response.headers['x-ratelimit-remaining'].first.to_i

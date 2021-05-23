@@ -6,14 +6,13 @@ module Discord
     include Discord::Mixins::UserAuth
     include Discord::Mixins::UserMentionable
 
-    SNARK = [
-      'do my taxes',
-      'grab a snack',
-      'finish my 120star run',
-      'laugh at @MOONMOON for dying again'
-    ].freeze
+    IMMEDIATE_RESPONSE_TYPE = 4
+    DEFERRED_RESPONSE_TYPE = 5
+    MAIN_RESPONSE = {
+      type: DEFERRED_RESPONSE_TYPE
+    }.freeze
     HELP_RESPONSE = {
-      type: 3,
+      type: IMMEDIATE_RESPONSE_TYPE,
       data: {
         tts:     false,
         flags:   64, # ephemeral
@@ -129,7 +128,7 @@ module Discord
     def response
       case command
       when 'gamesincommon'
-        main_response
+        MAIN_RESPONSE
       when 'gamesincommonhelp'
         HELP_RESPONSE
       when 'gamesincommonrevoke'
@@ -139,23 +138,9 @@ module Discord
       end
     end
 
-    def main_response
-      {
-        type: 3, # hide the command, but show our response message
-        data: {
-          tts:    false,
-          embeds: [{
-            title:       'Checking for authorization...',
-            description: "Please wait while I ~~#{SNARK.sample}~~ check for authorization from #{mention_phrase}.",
-            color:       DISCORD_COLORS[:info_blue]
-          }]
-        }
-      }
-    end
-
     def revoke_response
       {
-        type: 3,
+        type: IMMEDIATE_RESPONSE_TYPE,
         data: {
           tts:     false,
           flags:   64, # ephemeral
