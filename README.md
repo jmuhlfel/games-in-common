@@ -19,8 +19,6 @@ Enter `/gamesincommonhelp` for a complete breakdown of the options.
 * results that automatically delete themselves after 10 minutes, and can be deleted by any tagged user immediately
 * a `/gamesincommonrevoke` command that instantly deletes your cached user access token, preventing all future requests that tag you from working
 
-All of this is verifiable by reviewing the source code, particularly the Steam models, auth check worker, and response worker. (Reading my code might give you a headache though.)
-
 ### Permissions for servers
 `applications.commands` - allows the bot to register the needed slash commands on the server
 
